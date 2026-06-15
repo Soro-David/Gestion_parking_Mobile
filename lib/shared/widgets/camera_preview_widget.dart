@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 
 class CameraPreviewWidget extends StatefulWidget {
@@ -105,7 +106,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                context.pop();
                 _resetCapture();
                 _startAutoScanSimulation(); // Relancer la simulation pour le prochain scan
               },
@@ -224,7 +225,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
                                   decoration: BoxDecoration(
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppTheme.secondary.withOpacity(0.8),
+                                        color: AppTheme.secondary.withValues(alpha: 0.5),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -294,7 +295,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
 class ScannerOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.65);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.5);
     final scanRect = Rect.fromCenter(
       center: Offset(size.width / 2, size.height / 2 - 50),
       width: size.width * 0.7,

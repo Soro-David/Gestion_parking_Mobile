@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/onboarding/presentation/splash_screen.dart';
+import 'network/routes/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,11 +12,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Plateau Parking',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const SplashScreen(),
+      routerConfig: AppRouter.router,
     );
   }
 }
