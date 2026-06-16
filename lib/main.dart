@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'network/routes/app_router.dart';
+import 'core/routes/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,3 +20,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

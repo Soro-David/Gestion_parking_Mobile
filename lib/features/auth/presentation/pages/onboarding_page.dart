@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../network/routes/route_names.dart';
+import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 
   class OnboardingScreen extends StatefulWidget {

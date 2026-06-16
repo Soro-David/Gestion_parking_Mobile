@@ -1,13 +1,12 @@
 import 'package:camera/camera.dart';
-import '../../../../shared/models/parking_entry_model.dart';
+
+import '../../../../shared/domain/entities/parking_entry.dart';
 
 abstract class CaissierStationnementRepository {
-  Future<List<ParkingEntryModel>> getStationnementsEnCours();
+  Future<List<ParkingEntry>> getStationnementsEnCours();
 
-  /// Extract license plate via OCR
   Future<String?> extractLicensePlate(XFile imageFile);
 
-  /// Register a new parking session (check‑in)
   Future<bool> registerStationnement({
     required int parkingId,
     required String licensePlate,
@@ -15,6 +14,5 @@ abstract class CaissierStationnementRepository {
     String? modele,
   });
 
-  /// Checkout an existing session (check‑out)
   Future<Map<String, dynamic>> checkoutParkingSession(int sessionId);
 }

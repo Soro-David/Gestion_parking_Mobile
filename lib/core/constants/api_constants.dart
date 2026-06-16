@@ -11,7 +11,8 @@ class ApiConstants {
       'https://exclusively-untoppled-forest.ngrok-free.dev';
 
   /// URL du serveur en production (à définir)
-  static const String _productionBaseUrl =
+    // ignore: unused_field
+    static const String _productionBaseUrl =
       'https://votre-domaine-production.com';
 
   // ── URL active ──────────────────────────────────────────────────

@@ -1,22 +1,22 @@
+import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../../../shared/models/user_model.dart';
 
 class FakeAuthRepository implements AuthRepository {
   @override
-  Future<UserModel> login(String email, String password) async {
+  Future<User> login(String email, String password) async {
     // Simulate network delay (e.g., API call) of 2 seconds
     await Future.delayed(const Duration(seconds: 2));
 
     final emailClean = email.trim().toLowerCase();
 
     if (emailClean == 'agent@gmail.com') {
-      return const UserModel(
+      return const User(
         name: 'Agent Smart',
         email: 'agent@gmail.com',
         role: UserRole.agent,
       );
     } else if (emailClean == 'caissier@gmail.com') {
-      return const UserModel(
+      return const User(
         name: 'Caissier Smart',
         email: 'caissier@gmail.com',
         role: UserRole.caissier,

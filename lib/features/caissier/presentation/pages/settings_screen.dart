@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../network/routes/route_names.dart';
+import 'package:parking_mobile/core/routes/route_names.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 
 class CaissierSettingsScreen extends StatelessWidget {

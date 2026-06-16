@@ -1,8 +1,8 @@
-import '../../../../shared/models/parking_entry_model.dart';
-import '../../../../shared/models/parking_exit_model.dart';
+import '../../../../shared/domain/entities/parking_entry.dart';
+import '../../../../shared/domain/entities/parking_exit.dart';
 
 abstract class CaissierHistoryRepository {
-  Future<List<ParkingEntryModel>> getEntryHistory();
-  Future<List<ParkingExitModel>> getExitHistory();
-}
+  Future<List<ParkingEntry>> getEntryHistory();
 
+  Future<List<ParkingExit>> getExitHistory();
+}

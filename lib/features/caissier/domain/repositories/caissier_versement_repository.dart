@@ -1,6 +1,7 @@
-import '../../../../shared/models/versement_model.dart';
+import '../../../../shared/domain/entities/versement.dart';
 
 abstract class CaissierVersementRepository {
-  Future<List<VersementModel>> getVersements();
-  Future<VersementDetailModel> getVersementDetail(int id);
+  Future<List<Versement>> getVersements();
+
+  Future<VersementDetail> getVersementDetail(int id);
 }

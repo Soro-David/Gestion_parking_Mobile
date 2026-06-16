@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../network/routes/route_names.dart';
+import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
-import '../../../../shared/models/user_model.dart';
+import '../../domain/entities/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
