@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/dashboard/dashboard_screen.dart';
-import 'package:parking_mobile/features/agent/presentation/pages/history/history_screen.dart';
+import 'package:parking_mobile/features/agent/presentation/pages/historique/history_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/scan/scan_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/versement/versement_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/stationnement/stationnement_screen.dart';
@@ -44,7 +44,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
 			backgroundColor: AppTheme.background,
 			extendBody: true,
 			body: _isScanVisible
-					? const AgentScanScreen()
+					? AgentScanScreen(onClose: _toggleScanner)
 					: IndexedStack(
 							index: _currentIndex,
 							children: _screens,

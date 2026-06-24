@@ -1,4 +1,4 @@
-import '../../domain/entities/parking_exit.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_exit.dart';
 
 class ParkingExitModel extends ParkingExit {
   const ParkingExitModel({

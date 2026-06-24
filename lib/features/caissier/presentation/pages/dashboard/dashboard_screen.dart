@@ -2,42 +2,117 @@ import 'package:flutter/material.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
+import 'package:parking_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:parking_mobile/shared/domain/entities/user.dart';
+import 'package:parking_mobile/features/caissier/presentation/providers/caissier_stat_provider.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
+import 'package:parking_mobile/features/caissier/presentation/providers/caissier_stationnement_provider.dart';
 
-class CaissierDashboardScreen extends StatelessWidget {
+class CaissierDashboardScreen extends StatefulWidget {
   const CaissierDashboardScreen({super.key});
 
-  // Données mockées des transactions récentes
-  static final List<Map<String, String>> _recentTransactions = [
-    {
-      'ticket': 'Ticket #8942',
-      'immatriculation': 'LT-9082-HG',
-      'montant': '3 500 FCFA',
-      'heure': 'Il y a 5 min',
-      'methode': 'Espèces',
-    },
-    {
-      'ticket': 'Ticket #8941',
-      'immatriculation': 'CE-1248-IO',
-      'montant': '1 200 FCFA',
-      'heure': 'Il y a 12 min',
-      'methode': 'Orange Money',
-    },
-    {
-      'ticket': 'Ticket #8940',
-      'immatriculation': 'LT-4569-AZ',
-      'montant': '6 000 FCFA',
-      'heure': 'Il y a 25 min',
-      'methode': 'MTN MoMo',
-    },
-  ];
+  @override
+  State<CaissierDashboardScreen> createState() => _CaissierDashboardScreenState();
+}
+
+class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
+  String _userName = 'Marc-Aurèle';
+  String? _avatarUrl;
+  String _totalEncaisser = '... FCFA';
+  String _stationnements = '...';
+  String _encaisseNonVerse = '... FCFA';
+  String _dette = '... FCFA';
+  List<ParkingEntry> _activeParkings = [];
+  bool _isLoadingParkings = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+    _loadStats();
+    _loadActiveParkings();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await CaissierStatProvider.repository.getStats();
+
+      if (mounted) {
+        setState(() {
+          _totalEncaisser = '${stats.totalEncaisser.toStringAsFixed(0)} FCFA';
+          _stationnements = '${stats.stationnements}';
+          _encaisseNonVerse = '${stats.encaisseNonVerse.toStringAsFixed(0)} FCFA';
+          _dette = '${stats.dette.toStringAsFixed(0)} FCFA';
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading stats: $e');
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profileData = await AuthProvider.repository.getProfile();
+      final user = profileData['user'] as Map<String, dynamic>?;
+      if (user != null && mounted) {
+        setState(() {
+          final firstName = user['first_name'] ?? '';
+          final lastName = user['name'] ?? '';
+          _userName = '$firstName $lastName'.trim();
+          if (_userName.isEmpty) {
+            _userName = user['name'] ?? 'Caissier';
+          }
+          _avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+    }
+  }
+
+  int _estimatedCost(DateTime entryTime) {
+    final diff = DateTime.now().difference(entryTime);
+    final hours = (diff.inMinutes / 60.0).ceil();
+    final cost = hours * 500;
+    return cost > 0 ? cost : 500;
+  }
+
+  Future<void> _loadActiveParkings() async {
+    setState(() {
+      _isLoadingParkings = true;
+    });
+    try {
+      final parkings = await CaissierStationnementProvider.repository.getStationnementsEnCours();
+      if (mounted) {
+        setState(() {
+          _activeParkings = parkings;
+          _isLoadingParkings = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading active parkings: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingParkings = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    await Future.wait([
+      _loadProfile(),
+      _loadStats(),
+      _loadActiveParkings(),
+    ]);
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header avec avatar + recherche ──
+    return Column(
+      children: [
+        // ── Header avec avatar + recherche ──
           Container(
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
             decoration: const BoxDecoration(
@@ -55,32 +130,37 @@ class CaissierDashboardScreen extends StatelessWidget {
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            context.push(AppRoutes.caissierProfile);
+                          onTap: () async {
+                            await context.push(AppRoutes.caissierProfile);
+                            _loadProfile();
                           },
                           child: Container(
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFE040FB), Color(0xFF00E5FF)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              gradient: AppTheme.primaryGradient,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white24, width: 1.5),
+                              image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                                  ? DecorationImage(
+                                      image: NetworkImage(_avatarUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                             ),
-                            child: const Center(
-                              child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 28),
-                            ),
+                            child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+                                ? const Center(
+                                    child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
+                                  )
+                                : null,
                           ),
                         ),
                         const SizedBox(width: 14),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Session Caissier 👋', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontFamily: 'Inter')),
-                            Text('Marc-Aurèle', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Inter')),
+                            const Text('Session Caissier 👋', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontFamily: 'Inter')),
+                            Text(_userName, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Inter')),
                           ],
                         ),
                       ],
@@ -112,7 +192,16 @@ class CaissierDashboardScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 28),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: AppTheme.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 28),
 
           // ── Section Caisse Active (Derniers Encaissements) ──
           Padding(
@@ -123,8 +212,8 @@ class CaissierDashboardScreen extends StatelessWidget {
                 Row(
                   children: [
                     const Text(
-                      'Encaissements récents',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Inter'),
+                      'Ticket Actif',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -134,7 +223,7 @@ class CaissierDashboardScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        '${_recentTransactions.length}',
+                        '${_activeParkings.length > 3 ? 3 : _activeParkings.length}',
                         style: const TextStyle(
                           color: AppTheme.secondary,
                           fontSize: 12,
@@ -156,25 +245,38 @@ class CaissierDashboardScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           // ── Liste horizontale scrollable des transactions ──
-          SizedBox(
-            height: 155,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _recentTransactions.length,
-              itemBuilder: (context, index) {
-                final tx = _recentTransactions[index];
-                return _buildTransactionCard(tx, index);
-              },
+          if (_isLoadingParkings)
+            const SizedBox(
+              height: 155,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_activeParkings.isEmpty)
+            const SizedBox(
+              height: 155,
+              child: Center(
+                child: Text('Aucun ticket actif', style: TextStyle(color: Colors.grey)),
+              ),
+            )
+          else
+            SizedBox(
+              height: 155,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _activeParkings.length > 3 ? 3 : _activeParkings.length,
+                itemBuilder: (context, index) {
+                  final tx = _activeParkings[index];
+                  return _buildTransactionCard(tx, index);
+                },
+              ),
             ),
-          ),
 
           const SizedBox(height: 28),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Outils & Statistiques Caisse',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Inter'),
+              'Services & outils',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
             ),
           ),
           const SizedBox(height: 15),
@@ -193,36 +295,40 @@ class CaissierDashboardScreen extends StatelessWidget {
                   icon: Icons.payments_rounded,
                   title: 'Total Encaissé',
                   color: const Color(0xFF00E5FF),
-                  infoText: '96 000 FCFA',
+                  infoText: _totalEncaisser,
                 ),
                 _buildToolCard(
                   icon: Icons.receipt_long_rounded,
-                  title: 'Nombre Tickets',
+                  title: 'Stationnements',
                   color: const Color(0xFFE040FB),
-                  infoText: '48 encaissements',
+                  infoText: _stationnements,
                 ),
                 _buildToolCard(
                   icon: Icons.pending_actions_rounded,
-                  title: 'En Attente',
+                  title: 'Encaissé non versé',
                   color: Colors.amber[600]!,
-                  infoText: '3 transactions',
+                  infoText: _encaisseNonVerse,
                 ),
                 _buildToolCard(
                   icon: Icons.history_edu_rounded,
-                  title: 'Rapport Caisse',
+                  title: 'Dette',
                   color: Colors.greenAccent,
-                  infoText: 'Généré à 90%',
+                  infoText: _dette,
                 ),
               ],
             ),
           ),
           const SizedBox(height: 120),
+              ],
+            ),
+          ),
+            ),
+          ),
         ],
-      ),
     );
   }
 
-  Widget _buildTransactionCard(Map<String, String> tx, int index) {
+  Widget _buildTransactionCard(ParkingEntry tx, int index) {
     final List<List<Color>> gradients = [
       [const Color(0xFF1E3C72), const Color(0xFF2A5298)],
       [const Color(0xFF3A7BD5), const Color(0xFF3A6073)],
@@ -230,7 +336,11 @@ class CaissierDashboardScreen extends StatelessWidget {
     ];
     final gradient = gradients[index % gradients.length];
 
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        context.push(AppRoutes.caissierStationnementDetail, extra: tx);
+      },
+      child: Container(
       width: 250,
       margin: const EdgeInsets.only(right: 14),
       padding: const EdgeInsets.all(18),
@@ -257,7 +367,7 @@ class CaissierDashboardScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                tx['ticket']!,
+                tx.ticketNumber,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 15,
@@ -272,7 +382,7 @@ class CaissierDashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  tx['methode']!,
+                  tx.status,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -288,7 +398,7 @@ class CaissierDashboardScreen extends StatelessWidget {
               const Icon(Icons.directions_car_rounded, color: Colors.white70, size: 16),
               const SizedBox(width: 6),
               Text(
-                tx['immatriculation']!,
+                tx.licensePlate,
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -302,27 +412,33 @@ class CaissierDashboardScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                tx['montant']!,
+                '~ ${_estimatedCost(tx.entryTime)} FCFA',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.greenAccent,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Inter',
                 ),
               ),
-              Text(
-                tx['heure']!,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontFamily: 'Inter',
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.timer_rounded, color: Colors.white70, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${tx.entryTime.hour.toString().padLeft(2, '0')}:${tx.entryTime.minute.toString().padLeft(2, '0')}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildToolCard({
@@ -336,43 +452,43 @@ class CaissierDashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+        border: Border.all(color: Colors.white24, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white70,
-                  fontFamily: 'Inter',
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Inter',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                infoText,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                ),
-              ),
+              const SizedBox(width: 8),
+              Icon(icon, color: color, size: 20),
             ],
+          ),
+          const SizedBox(height: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              infoText,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Inter',
+              ),
+            ),
           ),
         ],
       ),

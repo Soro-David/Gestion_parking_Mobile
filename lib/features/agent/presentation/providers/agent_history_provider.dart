@@ -1,6 +1,7 @@
-import '../../data/repositories/dio_agent_history_repository.dart';
-import '../../domain/repositories/agent_history_repository.dart';
+import 'package:parking_mobile/shared/data/repositories/dio_history_repository.dart';
+import 'package:parking_mobile/shared/domain/repositories/history_repository.dart';
 
 class AgentHistoryProvider {
-  static final AgentHistoryRepository repository = DioAgentHistoryRepository();
+  /// Repository d'historique configuré pour l'agent (basePath = '/attendant').
+  static final HistoryRepository repository = DioHistoryRepository(basePath: '/attendant');
 }

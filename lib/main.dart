@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -14,6 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Plateau Parking',
+      scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: AppRouter.router,

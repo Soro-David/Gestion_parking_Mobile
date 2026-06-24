@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../constants/api_constants.dart';
+import 'auth_interceptor.dart';
 
 class DioClient {
   DioClient._();
@@ -13,7 +14,7 @@ class DioClient {
   }
 
   static Dio create([Dio? dio]) {
-    return dio ??
+    final client = dio ??
         Dio(
           BaseOptions(
             baseUrl: ApiConstants.baseUrl,
@@ -25,5 +26,7 @@ class DioClient {
             },
           ),
         );
+    client.interceptors.add(AuthInterceptor());
+    return client;
   }
 }

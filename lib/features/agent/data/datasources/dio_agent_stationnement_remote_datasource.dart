@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -8,8 +9,10 @@ import 'agent_stationnement_remote_datasource.dart';
 
 class DioAgentStationnementRemoteDataSource implements AgentStationnementRemoteDataSource {
   DioAgentStationnementRemoteDataSource({Dio? dio})
-      : _api = RemoteApiHelper(DioClient.create(dio));
+      : _dio = DioClient.create(dio),
+        _api = RemoteApiHelper(DioClient.create(dio));
 
+  final Dio _dio;
   final RemoteApiHelper _api;
 
   @override
@@ -17,7 +20,7 @@ class DioAgentStationnementRemoteDataSource implements AgentStationnementRemoteD
     try {
       final options = await _api.authOptions();
       final response = await _api.getWithFallback(
-        '/attendant/parking-sessions/stationnement_en_cours',
+        '/api/attendant/parking-sessions/stationnement_en_cours',
         options: options,
       );
 
@@ -33,6 +36,112 @@ class DioAgentStationnementRemoteDataSource implements AgentStationnementRemoteD
       throw Exception(DioErrorHandler.message(e));
     } catch (e) {
       throw Exception('Erreur lors de la récupération des stationnements en cours: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<String?> extractLicensePlate(XFile imageFile) async {
+    try {
+      final options = await _api.authOptions();
+
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.name,
+        ),
+      });
+
+      final response = await _dio.post(
+        '/api/attendant/ocr/license-plate',
+        data: formData,
+        options: Options(headers: options.headers),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data is Map && data.containsKey('license_plate')) {
+          return data['license_plate'] as String?;
+        }
+        if (data is Map && data.containsKey('plate')) {
+          return data['plate'] as String?;
+        }
+        if (data is Map && data.containsKey('result')) {
+          return data['result'] as String?;
+        }
+        return null;
+      }
+      throw Exception('Échec de l\'extraction de la plaque');
+    } on DioException catch (e) {
+      throw Exception(DioErrorHandler.message(e));
+    } catch (e) {
+      throw Exception('Erreur lors de l\'analyse OCR: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<bool> registerStationnement({
+    required int parkingId,
+    required String licensePlate,
+    String? marque,
+    String? modele,
+  }) async {
+    try {
+      final options = await _api.authOptions(
+        extraHeaders: {'Content-Type': 'application/json'},
+      );
+
+      final body = <String, dynamic>{
+        'parking_id': parkingId,
+        'license_plate': licensePlate,
+        if (marque != null && marque.isNotEmpty) 'marque': marque,
+        if (modele != null && modele.isNotEmpty) 'modele': modele,
+      };
+
+      final response = await _dio.post(
+        '/api/attendant/parking-sessions',
+        data: body,
+        options: options,
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      throw Exception(DioErrorHandler.message(e));
+    } catch (e) {
+      throw Exception(
+          'Erreur lors de l\'enregistrement du stationnement: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> checkoutParkingSession(int sessionId, {String? paymentMethod, double? amount}) async {
+    try {
+      final options = await _api.authOptions(
+        extraHeaders: {'Content-Type': 'application/json'},
+      );
+
+      final body = {
+        'session_id': sessionId,
+        if (paymentMethod != null) 'payment_method': paymentMethod,
+        if (amount != null) 'amount': amount,
+      };
+
+      final response = await _dio.post(
+        '/api/attendant/parking-sessions/checkout',
+        data: body,
+        options: options,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data is Map) {
+          return Map<String, dynamic>.from(response.data as Map);
+        }
+        throw Exception('Format de réponse invalide');
+      }
+      throw Exception('Échec de la clôture de la session');
+    } on DioException catch (e) {
+      throw Exception(DioErrorHandler.message(e));
+    } catch (e) {
+      throw Exception(
+          'Erreur lors de la clôture de la session: ${e.toString()}');
     }
   }
 }

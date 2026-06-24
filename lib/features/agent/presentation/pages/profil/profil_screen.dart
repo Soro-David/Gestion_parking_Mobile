@@ -1,11 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:parking_mobile/shared/domain/entities/user.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 
-class AgentProfilScreen extends StatelessWidget {
+class AgentProfilScreen extends StatefulWidget {
 	const AgentProfilScreen({super.key});
+
+	@override
+	State<AgentProfilScreen> createState() => _AgentProfilScreenState();
+}
+
+class _AgentProfilScreenState extends State<AgentProfilScreen> {
+	bool _isLoading = true;
+	String? _errorMessage;
+	String _name = 'Agent';
+	String _role = 'Agent Parking';
+	String? _avatarUrl;
+
+	@override
+	void initState() {
+		super.initState();
+		_loadProfile();
+	}
+
+	Future<void> _loadProfile() async {
+		try {
+			final profileData = await AuthProvider.repository.getProfile();
+			final user = profileData['user'] as Map<String, dynamic>?;
+			if (user != null) {
+				final firstName = user['first_name'] ?? '';
+				final lastName = user['name'] ?? '';
+				_name = '$firstName $lastName'.trim();
+				if (_name.isEmpty) {
+					_name = user['name'] ?? 'Agent';
+				}
+				final roleStr = user['role'] ?? 'attendant';
+				_role = roleStr == 'attendant' || roleStr == 'agent' ? 'Agent Parking' : 'Caissier de Service';
+				_avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+			}
+			setState(() {
+				_isLoading = false;
+				_errorMessage = null;
+			});
+		} catch (e) {
+			setState(() {
+				_errorMessage = e.toString().replaceAll('Exception: ', '');
+				_isLoading = false;
+			});
+		}
+	}
 
 	void _handleLogout(BuildContext context) async {
 		showDialog(
@@ -40,6 +85,10 @@ class AgentProfilScreen extends StatelessWidget {
 			backgroundColor: AppTheme.background,
 			appBar: AppBar(
 				toolbarHeight: 80,
+				leading: IconButton(
+					icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+					onPressed: () => context.pop(),
+				),
 				title: const Text(
 					'Profil',
 					style: TextStyle(fontFamily: 'Inter', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
@@ -57,171 +106,237 @@ class AgentProfilScreen extends StatelessWidget {
 					),
 				),
 			),
-			body: SingleChildScrollView(
-				child: Column(
-					crossAxisAlignment: CrossAxisAlignment.stretch,
-					children: [
-						Padding(
-							padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-							child: Container(
-								padding: const EdgeInsets.symmetric(vertical: 24),
-								decoration: BoxDecoration(
-									color: AppTheme.surface,
-									borderRadius: BorderRadius.circular(20),
-									boxShadow: [
-										BoxShadow(
-											color: Colors.black.withValues(alpha: 0.08),
-											blurRadius: 12,
-											offset: const Offset(0, 4),
-										),
-									],
-								),
-								child: Column(
-									children: [
-										Container(
-											width: 100,
-											height: 100,
-											decoration: BoxDecoration(
-												shape: BoxShape.circle,
-												gradient: const LinearGradient(
-													colors: [AppTheme.primary, AppTheme.secondary],
-													begin: Alignment.topLeft,
-													end: Alignment.bottomRight,
-												),
-												boxShadow: [
-													BoxShadow(
-														color: AppTheme.secondary.withValues(alpha: 0.35),
-														blurRadius: 20,
-														offset: const Offset(0, 8),
-													),
-												],
-											),
-											child: const Icon(
-												Icons.person_rounded,
-												color: Colors.white,
-												size: 50,
-											),
-										),
-										const SizedBox(height: 16),
-										const Text(
-											'Dognenin',
-											style: TextStyle(
-												color: Colors.white,
-												fontSize: 22,
-												fontWeight: FontWeight.bold,
-												fontFamily: 'Inter',
-											),
-										),
-										const SizedBox(height: 4),
-										const Text(
-											'Agent Parking',
-											style: TextStyle(
-												color: AppTheme.textSecondary,
-												fontSize: 14,
-											),
-										),
-									],
-								),
+			body: _isLoading
+					? const Center(
+							child: CircularProgressIndicator(
+								color: AppTheme.secondary,
 							),
-						),
-
-						const SizedBox(height: 24),
-
-						Padding(
-							padding: const EdgeInsets.symmetric(horizontal: 20),
-							child: _buildMenuSection(
-								title: 'Compte',
-								icon: Icons.person_outline_rounded,
-								items: [
-									_buildMenuItem(
-										context: context,
-										icon: Icons.person_outline_rounded,
-										label: 'Modifier Profil',
-										onTap: () {
-											context.push('${AppRoutes.agentProfile}/edit');
-										},
-									),
-									_buildDivider(),
-									_buildMenuItem(
-										context: context,
-										icon: Icons.notifications_none_rounded,
-										label: 'Notifications',
-										onTap: () {},
-									),
-									_buildDivider(),
-									_buildMenuItem(
-										context: context,
-										icon: Icons.lock_outline_rounded,
-										label: 'Sécurité',
-										onTap: () {},
-									),
-								],
-							),
-						),
-
-						const SizedBox(height: 16),
-
-						Padding(
-							padding: const EdgeInsets.symmetric(horizontal: 20),
-							child: _buildMenuSection(
-								title: 'Général',
-								icon: Icons.tune_rounded,
-								items: [
-									_buildMenuItem(
-										context: context,
-										icon: Icons.privacy_tip_outlined,
-										label: 'Politique de confidentialité',
-										onTap: () {},
-									),
-									_buildDivider(),
-									_buildMenuItem(
-										context: context,
-										icon: Icons.settings_outlined,
-										label: 'Paramètres',
-										onTap: () {},
-									),
-								],
-							),
-						),
-
-						const SizedBox(height: 24),
-
-						Padding(
-							padding: const EdgeInsets.symmetric(horizontal: 20),
-							child: GestureDetector(
-								onTap: () => _handleLogout(context),
-								child: Container(
-									width: double.infinity,
-									padding: const EdgeInsets.symmetric(vertical: 16),
-									decoration: BoxDecoration(
-										color: Colors.redAccent.withValues(alpha: 0.1),
-										borderRadius: BorderRadius.circular(16),
-										border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
-									),
-									child: const Row(
-										mainAxisAlignment: MainAxisAlignment.center,
-										children: [
-											Icon(Icons.logout_rounded, color: Colors.redAccent, size: 22),
-											SizedBox(width: 10),
-											Text(
-												'Déconnexion',
-												style: TextStyle(
+						)
+					: _errorMessage != null
+							? Center(
+									child: Padding(
+										padding: const EdgeInsets.all(24.0),
+										child: Column(
+											mainAxisAlignment: MainAxisAlignment.center,
+											children: [
+												const Icon(
+													Icons.error_outline_rounded,
 													color: Colors.redAccent,
-													fontSize: 16,
-													fontWeight: FontWeight.bold,
-													fontFamily: 'Inter',
+													size: 48,
+												),
+												const SizedBox(height: 16),
+												Text(
+													_errorMessage!,
+													textAlign: TextAlign.center,
+													style: const TextStyle(
+														color: Colors.white,
+														fontSize: 16,
+														fontFamily: 'Inter',
+													),
+												),
+												const SizedBox(height: 24),
+												ElevatedButton.icon(
+													onPressed: () {
+														setState(() {
+															_isLoading = true;
+															_errorMessage = null;
+														});
+														_loadProfile();
+													},
+													icon: const Icon(Icons.refresh_rounded),
+													label: const Text('Réessayer'),
+													style: ElevatedButton.styleFrom(
+														backgroundColor: AppTheme.secondary,
+														foregroundColor: Colors.white,
+														shape: RoundedRectangleBorder(
+															borderRadius: BorderRadius.circular(12),
+														),
+														padding: const EdgeInsets.symmetric(
+															horizontal: 24,
+															vertical: 12,
+														),
+													),
+												),
+											],
+										),
+									),
+								)
+							: SingleChildScrollView(
+									child: Column(
+										crossAxisAlignment: CrossAxisAlignment.stretch,
+										children: [
+											Padding(
+												padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+												child: Container(
+													padding: const EdgeInsets.symmetric(vertical: 24),
+													decoration: BoxDecoration(
+														color: AppTheme.surface,
+														borderRadius: BorderRadius.circular(20),
+														boxShadow: [
+															BoxShadow(
+																color: Colors.black.withValues(alpha: 0.08),
+																blurRadius: 12,
+																offset: const Offset(0, 4),
+															),
+														],
+													),
+													child: Column(
+														children: [
+															Container(
+																width: 100,
+																height: 100,
+																decoration: BoxDecoration(
+																	shape: BoxShape.circle,
+																	gradient: const LinearGradient(
+																		colors: [AppTheme.primary, AppTheme.secondary],
+																		begin: Alignment.topLeft,
+																		end: Alignment.bottomRight,
+																	),
+																	boxShadow: [
+																		BoxShadow(
+																			color: AppTheme.secondary.withValues(alpha: 0.35),
+																			blurRadius: 20,
+																			offset: const Offset(0, 8),
+																		),
+																	],
+																	image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+																			? DecorationImage(
+																					image: NetworkImage(_avatarUrl!),
+																					fit: BoxFit.cover,
+																				)
+																			: null,
+																),
+																child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+																		? const Icon(
+																				Icons.person_rounded,
+																				color: Colors.white,
+																				size: 50,
+																			)
+																		: null,
+															),
+															const SizedBox(height: 16),
+															Text(
+																_name,
+																style: const TextStyle(
+																	color: Colors.white,
+																	fontSize: 22,
+																	fontWeight: FontWeight.bold,
+																	fontFamily: 'Inter',
+																),
+															),
+															const SizedBox(height: 4),
+															Text(
+																_role,
+																style: const TextStyle(
+																	color: AppTheme.textSecondary,
+																	fontSize: 14,
+																),
+															),
+														],
+													),
 												),
 											),
+
+											const SizedBox(height: 24),
+
+											Padding(
+												padding: const EdgeInsets.symmetric(horizontal: 20),
+												child: _buildMenuSection(
+													title: 'Compte',
+													icon: Icons.person_outline_rounded,
+													items: [
+														_buildMenuItem(
+															context: context,
+															icon: Icons.person_outline_rounded,
+															label: 'Modifier Profil',
+															onTap: () async {
+																await context.push('${AppRoutes.agentProfile}/edit');
+																_loadProfile();
+															},
+														),
+														_buildDivider(),
+														_buildMenuItem(
+															context: context,
+															icon: Icons.notifications_none_rounded,
+															label: 'Notifications',
+															onTap: () {},
+														),
+														_buildDivider(),
+                            _buildMenuItem(
+                              context: context,
+                              icon: Icons.lock_outline_rounded,
+                              label: 'Sécurité',
+                              onTap: () => context.push(AppRoutes.agentSecurity),
+                            ),
+													],
+												),
+											),
+
+											const SizedBox(height: 16),
+
+											Padding(
+												padding: const EdgeInsets.symmetric(horizontal: 20),
+												child: _buildMenuSection(
+													title: 'Général',
+													icon: Icons.tune_rounded,
+													items: [
+														_buildMenuItem(
+															context: context,
+															icon: Icons.privacy_tip_outlined,
+															label: 'Politique de confidentialité',
+															onTap: () {},
+														),
+														_buildDivider(),
+														_buildMenuItem(
+															context: context,
+															icon: Icons.settings_outlined,
+															label: 'Paramètres',
+															onTap: () {
+																context.push(AppRoutes.agentSettings);
+															},
+														),
+													],
+												),
+											),
+
+											const SizedBox(height: 24),
+
+											Padding(
+												padding: const EdgeInsets.symmetric(horizontal: 20),
+												child: GestureDetector(
+													onTap: () => _handleLogout(context),
+													child: Container(
+														width: double.infinity,
+														padding: const EdgeInsets.symmetric(vertical: 16),
+														decoration: BoxDecoration(
+															color: Colors.redAccent.withValues(alpha: 0.1),
+															borderRadius: BorderRadius.circular(16),
+															border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+														),
+														child: const Row(
+															mainAxisAlignment: MainAxisAlignment.center,
+															children: [
+																Icon(Icons.logout_rounded, color: Colors.redAccent, size: 22),
+																SizedBox(width: 10),
+																Text(
+																	'Déconnexion',
+																	style: TextStyle(
+																		color: Colors.redAccent,
+																		fontSize: 16,
+																		fontWeight: FontWeight.bold,
+																		fontFamily: 'Inter',
+																	),
+																),
+															],
+														),
+													),
+												),
+											),
+
+											const SizedBox(height: 90),
 										],
 									),
 								),
-							),
-						),
-
-						const SizedBox(height: 90),
-					],
-				),
-			),
 		);
 	}
 

@@ -9,6 +9,9 @@ class ParkingEntry {
   final String? agentName;
   final String? notes;
   final String? photoUrl;
+  /// Tarif horaire applicable (en FCFA). Vient du backend.
+  /// null = non connu (fallback à un calcul local).
+  final double? pricePerHour;
 
   const ParkingEntry({
     required this.id,
@@ -21,5 +24,6 @@ class ParkingEntry {
     this.agentName,
     this.notes,
     this.photoUrl,
+    this.pricePerHour,
   });
 }

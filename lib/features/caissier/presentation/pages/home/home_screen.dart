@@ -46,7 +46,7 @@ class _CaissierHomeScreenState extends State<CaissierHomeScreen> {
       backgroundColor: AppTheme.background,
       extendBody: true,
       body: _isScanVisible
-          ? const CaissierScanScreen()
+          ? CaissierScanScreen(onClose: _toggleScanner)
           : IndexedStack(
               index: _currentIndex,
               children: _screens,

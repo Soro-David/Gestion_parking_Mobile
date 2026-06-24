@@ -4,7 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
-import '../../domain/entities/user.dart';
+import 'package:parking_mobile/shared/domain/entities/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -125,20 +125,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ),
 
           // 2. Animated Custom Paint for Background Glowing Orbs
-          AnimatedBuilder(
-            animation: _orbController,
-            builder: (context, child) {
-              return CustomPaint(
-                size: size,
-                painter: BackgroundOrbPainter(
-                  animationValue: _orbController.value,
-                  primaryColor: AppTheme.primary,
-                  secondaryColor: AppTheme.secondary,
-                  accentColor: AppTheme.accent,
-                ),
-              );
-            },
-          ),
+          // AnimatedBuilder(
+          //   animation: _orbController,
+          //   builder: (context, child) {
+          //     return CustomPaint(
+          //       size: size,
+          //       painter: BackgroundOrbPainter(
+          //         animationValue: _orbController.value,
+          //         primaryColor: AppTheme.primary,
+          //         secondaryColor: AppTheme.secondary,
+          //         accentColor: AppTheme.accent,
+          //       ),
+          //     );
+          //   },
+          // ),
 
           // 3. Scrollable Login Content (Prevents overflow with keyboard)
           SafeArea(
@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text(
                               'Connexion',
@@ -186,6 +186,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 0.5,
+
                               ),
                             ),
                             const SizedBox(height: 6),

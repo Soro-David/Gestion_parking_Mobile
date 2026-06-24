@@ -104,49 +104,51 @@ class _AgentVersementScreenState extends State<AgentVersementScreen> {
 							onRefresh: () async => _reload(),
 							color: AppTheme.secondary,
 							backgroundColor: AppTheme.surface,
-							child: ListView(
+							child: CustomScrollView(
 								physics: const AlwaysScrollableScrollPhysics(),
-								children: [
-									SizedBox(height: MediaQuery.of(context).size.height * 0.35),
-									Center(
-										child: Column(
-											mainAxisAlignment: MainAxisAlignment.center,
-											children: [
-												Container(
-													padding: const EdgeInsets.all(28),
-													decoration: BoxDecoration(
-														color: AppTheme.surface,
-														shape: BoxShape.circle,
-														border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+								slivers: [
+									SliverFillRemaining(
+										hasScrollBody: false,
+										child: Center(
+											child: Column(
+												mainAxisAlignment: MainAxisAlignment.center,
+												children: [
+													Container(
+														padding: const EdgeInsets.all(28),
+														decoration: BoxDecoration(
+															color: AppTheme.surface,
+															shape: BoxShape.circle,
+															border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+														),
+														child: Icon(
+															Icons.account_balance_wallet_outlined,
+															size: 56,
+															color: Colors.white.withValues(alpha: 0.5),
+														),
 													),
-													child: Icon(
-														Icons.account_balance_wallet_outlined,
-														size: 56,
-														color: Colors.white.withValues(alpha: 0.5),
+													const SizedBox(height: 24),
+													const Text(
+														'Aucun versement disponible',
+														style: TextStyle(
+															color: Colors.white,
+															fontSize: 17,
+															fontWeight: FontWeight.bold,
+															fontFamily: 'Inter',
+														),
 													),
-												),
-												const SizedBox(height: 24),
-												const Text(
-													'Aucun versement disponible',
-													style: TextStyle(
-														color: Colors.white,
-														fontSize: 17,
-														fontWeight: FontWeight.bold,
-														fontFamily: 'Inter',
+													const SizedBox(height: 8),
+													Text(
+														'Vous n\'avez effectué aucun versement.\nGlissez vers le bas pour actualiser.',
+														textAlign: TextAlign.center,
+														style: TextStyle(
+															color: Colors.white.withValues(alpha: 0.5),
+															fontSize: 13,
+															fontFamily: 'Inter',
+															height: 1.5,
+														),
 													),
-												),
-												const SizedBox(height: 8),
-												Text(
-													'Vous n\'avez effectué aucun versement.\nGlissez vers le bas pour actualiser.',
-													textAlign: TextAlign.center,
-													style: TextStyle(
-														color: Colors.white.withValues(alpha: 0.5),
-														fontSize: 13,
-														fontFamily: 'Inter',
-														height: 1.5,
-													),
-												),
-											],
+												],
+											),
 										),
 									),
 								],

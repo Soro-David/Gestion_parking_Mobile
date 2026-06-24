@@ -14,5 +14,5 @@ abstract class CaissierStationnementRemoteDataSource {
     String? modele,
   });
 
-  Future<Map<String, dynamic>> checkoutParkingSession(int sessionId);
+  Future<Map<String, dynamic>> checkoutParkingSession(int sessionId, {String? paymentMethod, double? amount});
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
-import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 
 class CaissierSettingsScreen extends StatelessWidget {
   const CaissierSettingsScreen({super.key});
@@ -53,7 +53,9 @@ class CaissierSettingsScreen extends StatelessWidget {
           style: TextStyle(color: AppTheme.textSecondary),
         ),
         const SizedBox(height: 18),
-        _tile(Icons.person_outline_rounded, 'Profil caissier', () {}),
+        _tile(Icons.person_outline_rounded, 'Profil caissier', () {
+          context.push(AppRoutes.caissierProfile);
+        }),
         _tile(Icons.notifications_none_rounded, 'Notifications', () {}),
         _tile(Icons.lock_outline_rounded, 'Securite', () {}),
         _tile(Icons.logout_rounded, 'Deconnexion', () => _handleLogout(context), isDanger: true),

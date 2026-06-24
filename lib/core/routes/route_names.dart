@@ -13,11 +13,13 @@ class AppRoutes {
   static const String agentScan = '/agent/scan';
   static const String agentProfile = '/agent/profile';
   static const String agentProfileEdit = '/agent/profile/edit';
+  static const String agentSecurity = '/agent/profile/security';
   static const String agentSettings = '/agent/settings';
   static const String agentVersement = '/agent/versement';
   static const String agentVersementDetail = '/agent/versement/detail';
   static const String agentStationnement = '/agent/stationnement';
   static const String agentStationnementsEnCours = '/agent/stationnement/encours';
+  static const String agentStationnementDetail = '/agent/stationnement/detail';
   static const String agentEntreeDetail = '/agent/history/entree';
   static const String agentSortieDetail = '/agent/history/sortie';
   static const String agentParkingDetail = '/agent/parking/detail';
@@ -29,6 +31,7 @@ class AppRoutes {
   static const String caissierScan = '/caissier/scan';
   static const String caissierProfile = '/caissier/profile';
   static const String caissierProfileEdit = '/caissier/profile/edit';
+  static const String caissierSecurity = '/caissier/profile/security';
   static const String caissierReports = '/caissier/reports';
   static const String caissierSettings = '/caissier/settings';
   static const String caissierVersement = '/caissier/versement';

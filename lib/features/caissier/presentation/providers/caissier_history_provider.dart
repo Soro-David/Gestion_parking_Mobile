@@ -1,6 +1,7 @@
-import '../../data/repositories/dio_caissier_history_repository.dart';
-import '../../domain/repositories/caissier_history_repository.dart';
+import 'package:parking_mobile/shared/data/repositories/dio_history_repository.dart';
+import 'package:parking_mobile/shared/domain/repositories/history_repository.dart';
 
 class CaissierHistoryProvider {
-  static final CaissierHistoryRepository repository = DioCaissierHistoryRepository();
+  /// Repository d'historique configuré pour le caissier (basePath = '/caissier').
+  static final HistoryRepository repository = DioHistoryRepository(basePath: '/caissier');
 }

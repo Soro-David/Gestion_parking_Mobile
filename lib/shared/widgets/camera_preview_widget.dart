@@ -8,12 +8,15 @@ class CameraPreviewWidget extends StatefulWidget {
   final bool isQrCodeMode;
   final CameraController? controller;
   final Future<void>? initializeControllerFuture;
+  /// Callback déclenché après chaque capture photo (hors mode QR)
+  final void Function(XFile image)? onImageCaptured;
 
   const CameraPreviewWidget({
     super.key,
     this.isQrCodeMode = false,
     this.controller,
     this.initializeControllerFuture,
+    this.onImageCaptured,
   });
 
   @override
@@ -125,6 +128,8 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
       setState(() {
         _capturedImage = picture;
       });
+      // Notifier le parent
+      widget.onImageCaptured?.call(picture);
     } catch (e) {
       debugPrint('Error taking picture: $e');
     }
@@ -170,17 +175,18 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
                           left: 0,
                           right: 0,
                           child: Center(
-                            child: ElevatedButton.icon(
+                            child: ElevatedButton(
                               onPressed: _resetCapture,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.secondary,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(18),
+                                elevation: 6,
                               ),
-                              icon: const Icon(Icons.refresh, color: Colors.white),
-                              label: const Text(
-                                'Recapturer',
-                                style: TextStyle(color: Colors.white),
+                              child: const Icon(
+                                Icons.refresh_rounded,
+                                color: Colors.white,
+                                size: 28,
                               ),
                             ),
                           ),
@@ -259,20 +265,18 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> with SingleTi
                           left: 0,
                           right: 0,
                           child: Center(
-                            child: ElevatedButton.icon(
+                            child: ElevatedButton(
                               onPressed: _capturePhoto,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.secondary,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(18),
+                                elevation: 6,
                               ),
-                              icon: const Icon(
-                                Icons.camera_alt,
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
                                 color: Colors.white,
-                              ),
-                              label: const Text(
-                                'Capturer',
-                                style: TextStyle(color: Colors.white),
+                                size: 28,
                               ),
                             ),
                           ),

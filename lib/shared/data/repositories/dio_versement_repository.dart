@@ -1,22 +1,37 @@
 import 'package:dio/dio.dart';
 
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/network/dio_error_handler.dart';
-import '../../../../core/network/remote_api_helper.dart';
-import '../../../../shared/data/models/versement_model.dart';
-import 'agent_versement_remote_datasource.dart';
+import 'package:parking_mobile/core/network/dio_client.dart';
+import 'package:parking_mobile/core/network/dio_error_handler.dart';
+import 'package:parking_mobile/core/network/remote_api_helper.dart';
+import 'package:parking_mobile/shared/data/models/versement_model.dart';
+import 'package:parking_mobile/shared/domain/entities/versement.dart';
+import 'package:parking_mobile/shared/domain/repositories/versement_repository.dart';
 
-class DioAgentVersementRemoteDataSource implements AgentVersementRemoteDataSource {
-  DioAgentVersementRemoteDataSource({Dio? dio}) : _dio = DioClient.create(dio);
+/// Implémentation partagée du repository de versements.
+///
+/// Le [basePath] permet d'injecter le préfixe de route propre à chaque rôle :
+/// - Agent    → basePath = '/attendant'
+/// - Caissier → basePath = '/caissier'
+///
+/// Les endpoints appelés suivent la convention :
+///   GET /api{basePath}/versements/list
+///   GET /api{basePath}/versements/list/{id}
+class DioVersementRepository implements VersementRepository {
+  /// [basePath] : préfixe de l'API propre au rôle.
+  ///   - '/attendant' pour l'agent
+  ///   - '/caissier'  pour le caissier
+  DioVersementRepository({required this.basePath, Dio? dio})
+      : _dio = DioClient.create(dio);
 
+  final String basePath;
   final Dio _dio;
 
   @override
-  Future<List<VersementModel>> getVersements() async {
+  Future<List<Versement>> getVersements() async {
     try {
       final options = await RemoteApiHelper(_dio).authOptions();
       final response = await _dio.get(
-        '/api/attendant/versements/list',
+        '/api$basePath/versements/list',
         options: options,
       );
 
@@ -36,11 +51,11 @@ class DioAgentVersementRemoteDataSource implements AgentVersementRemoteDataSourc
   }
 
   @override
-  Future<VersementDetailModel> getVersementDetail(int id) async {
+  Future<VersementDetail> getVersementDetail(int id) async {
     try {
       final options = await RemoteApiHelper(_dio).authOptions();
       final response = await _dio.get(
-        '/api/attendant/versements/list/$id',
+        '/api$basePath/versements/list/$id',
         options: options,
       );
 

@@ -1,4 +1,4 @@
-import '../../domain/entities/parking_entry.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
 
 class ParkingEntryModel extends ParkingEntry {
   const ParkingEntryModel({
@@ -12,6 +12,7 @@ class ParkingEntryModel extends ParkingEntry {
     super.agentName,
     super.notes,
     super.photoUrl,
+    super.pricePerHour,
   });
 
   factory ParkingEntryModel.fromJson(Map<String, dynamic> json) {
@@ -53,9 +54,10 @@ class ParkingEntryModel extends ParkingEntry {
       entryTime: entryTime,
       zone: json['parking_name'] ?? json['parkingName'] ?? json['zone'] ?? 'Parking',
       status: json['status'] == 'occupied' ? 'en_cours' : (json['status'] ?? 'en_cours'),
-      agentName: json['agent_name'] ?? json['agentName'] ?? 'Agent',
+      agentName: json['agent_name'] ?? json['agentName'] ?? json['created_by_name'] ?? 'Agent',
       notes: json['notes'],
       photoUrl: json['photo_url'] ?? json['photoUrl'],
+      pricePerHour: (json['price_per_hour'] as num?)?.toDouble(),
     );
   }
 

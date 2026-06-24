@@ -2,39 +2,117 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
+import 'package:parking_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:parking_mobile/features/agent/presentation/providers/agent_stat_provider.dart';
+import 'package:parking_mobile/shared/domain/entities/user.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
+import 'package:parking_mobile/features/agent/presentation/providers/agent_stationnement_provider.dart';
 
-class AgentDashboardScreen extends StatelessWidget {
+class AgentDashboardScreen extends StatefulWidget {
 	const AgentDashboardScreen({super.key});
 
-	// Données mockées des stationnements actifs
-	static final List<Map<String, String>> _ticketsActifs = [
-		{
-			'parking': 'Parking Akwa Centre',
-			'place': 'B-12',
-			'plaque': 'LT-1234-AB',
-			'duree': '02h 15min',
-		},
-		{
-			'parking': 'Parking Bonanjo',
-			'place': 'A-05',
-			'plaque': 'CE-5678-CD',
-			'duree': '01h 30min',
-		},
-		{
-			'parking': 'Parking Bonapriso',
-			'place': 'C-08',
-			'plaque': 'LT-9012-EF',
-			'duree': '03h 45min',
-		},
-	];
+	@override
+	State<AgentDashboardScreen> createState() => _AgentDashboardScreenState();
+}
+
+class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
+	String _userName = 'Dognenin';
+	String? _avatarUrl;
+	String _totalEncaisser = '... FCFA';
+	String _stationnements = '...';
+	String _encaisseNonVerse = '... FCFA';
+	String _dette = '... FCFA';
+	List<ParkingEntry> _activeParkings = [];
+	bool _isLoadingParkings = true;
+
+	@override
+	void initState() {
+		super.initState();
+		_loadProfile();
+		_loadStats();
+		_loadActiveParkings();
+	}
+
+	Future<void> _loadStats() async {
+		try {
+			final stats = await AgentStatProvider.repository.getStats();
+
+			if (mounted) {
+				setState(() {
+					_totalEncaisser = '${stats.totalEncaisser.toStringAsFixed(0)} FCFA';
+					_stationnements = '${stats.stationnements}';
+					_encaisseNonVerse = '${stats.encaisseNonVerse.toStringAsFixed(0)} FCFA';
+					_dette = '${stats.dette.toStringAsFixed(0)} FCFA';
+				});
+			}
+		} catch (e) {
+			debugPrint('Error loading stats: $e');
+		}
+	}
+
+	Future<void> _loadProfile() async {
+		try {
+			final profileData = await AuthProvider.repository.getProfile();
+			final user = profileData['user'] as Map<String, dynamic>?;
+			if (user != null && mounted) {
+				setState(() {
+					final firstName = user['first_name'] ?? '';
+					final lastName = user['name'] ?? '';
+					_userName = '$firstName $lastName'.trim();
+					if (_userName.isEmpty) {
+						_userName = user['name'] ?? 'Agent';
+					}
+					_avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+				});
+			}
+		} catch (e) {
+			debugPrint('Error loading profile: $e');
+		}
+	}
+
+	int _estimatedCost(DateTime entryTime) {
+		final diff = DateTime.now().difference(entryTime);
+		final hours = (diff.inMinutes / 60.0).ceil();
+		final cost = hours * 500;
+		return cost > 0 ? cost : 500;
+	}
+
+	Future<void> _loadActiveParkings() async {
+		setState(() {
+			_isLoadingParkings = true;
+		});
+		try {
+			final parkings = await AgentStationnementProvider.repository.getStationnementsEnCours();
+			if (mounted) {
+				setState(() {
+					_activeParkings = parkings;
+					_isLoadingParkings = false;
+				});
+			}
+		} catch (e) {
+			debugPrint('Error loading active parkings: $e');
+			if (mounted) {
+				setState(() {
+					_isLoadingParkings = false;
+				});
+			}
+		}
+	}
+
+	Future<void> _handleRefresh() async {
+		await Future.wait([
+			_loadProfile(),
+			_loadStats(),
+			_loadActiveParkings(),
+		]);
+	}
+
 
 	@override
 	Widget build(BuildContext context) {
-		return SingleChildScrollView(
-			child: Column(
-				crossAxisAlignment: CrossAxisAlignment.start,
-				children: [
-					// ── Header avec avatar + recherche ──
+		return Column(
+			children: [
+				// ── Header avec avatar + recherche ──
 					Container(
 						padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
 						decoration: const BoxDecoration(
@@ -52,8 +130,9 @@ class AgentDashboardScreen extends StatelessWidget {
 										Row(
 											children: [
 												GestureDetector(
-													onTap: () {
-														context.push(AppRoutes.agentProfile);
+													onTap: () async {
+														await context.push(AppRoutes.agentProfile);
+														_loadProfile();
 													},
 													child: Container(
 														width: 48,
@@ -62,18 +141,26 @@ class AgentDashboardScreen extends StatelessWidget {
 															gradient: AppTheme.primaryGradient,
 															shape: BoxShape.circle,
 															border: Border.all(color: Colors.white24, width: 1.5),
+															image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+																	? DecorationImage(
+																			image: NetworkImage(_avatarUrl!),
+																			fit: BoxFit.cover,
+																		)
+																	: null,
 														),
-														child: const Center(
-															child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
-														),
+														child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+																? const Center(
+																		child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
+																	)
+																: null,
 													),
 												),
 												const SizedBox(width: 14),
-												const Column(
+												Column(
 													crossAxisAlignment: CrossAxisAlignment.start,
 													children: [
-														Text('Bonjour 👋', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
-														Text('Dognenin', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+														const Text('Bonjour 👋', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+														Text(_userName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
 													],
 												),
 											],
@@ -104,7 +191,16 @@ class AgentDashboardScreen extends StatelessWidget {
 							],
 						),
 					),
-					const SizedBox(height: 28),
+				Expanded(
+					child: RefreshIndicator(
+						onRefresh: _handleRefresh,
+						color: AppTheme.primary,
+						child: SingleChildScrollView(
+							physics: const AlwaysScrollableScrollPhysics(),
+							child: Column(
+							crossAxisAlignment: CrossAxisAlignment.start,
+							children: [
+								const SizedBox(height: 28),
 
 					// ── Titre "Ticket Actif" + bouton "+" ──
 					Padding(
@@ -126,7 +222,7 @@ class AgentDashboardScreen extends StatelessWidget {
 												borderRadius: BorderRadius.circular(10),
 											),
 											child: Text(
-												'${_ticketsActifs.length}',
+												'${_activeParkings.length > 3 ? 3 : _activeParkings.length}',
 												style: const TextStyle(
 													color: Colors.greenAccent,
 													fontSize: 13,
@@ -160,18 +256,31 @@ class AgentDashboardScreen extends StatelessWidget {
 					const SizedBox(height: 12),
 
 					// ── Liste horizontale scrollable des tickets actifs ──
-					SizedBox(
-						height: 150,
-						child: ListView.builder(
-							scrollDirection: Axis.horizontal,
-							padding: const EdgeInsets.symmetric(horizontal: 20),
-							itemCount: _ticketsActifs.length,
-							itemBuilder: (context, index) {
-								final ticket = _ticketsActifs[index];
-								return _buildTicketActifCard(ticket, index);
-							},
+					if (_isLoadingParkings)
+						const SizedBox(
+							height: 150,
+							child: Center(child: CircularProgressIndicator()),
+						)
+					else if (_activeParkings.isEmpty)
+						const SizedBox(
+							height: 150,
+							child: Center(
+								child: Text('Aucun ticket actif', style: TextStyle(color: Colors.grey)),
+							),
+						)
+					else
+						SizedBox(
+							height: 150,
+							child: ListView.builder(
+								scrollDirection: Axis.horizontal,
+								padding: const EdgeInsets.symmetric(horizontal: 20),
+								itemCount: _activeParkings.length > 3 ? 3 : _activeParkings.length,
+								itemBuilder: (context, index) {
+									final ticket = _activeParkings[index];
+									return _buildTicketActifCard(ticket, index);
+								},
+							),
 						),
-					),
 
 					const SizedBox(height: 28),
 					const Padding(
@@ -186,24 +295,48 @@ class AgentDashboardScreen extends StatelessWidget {
 							shrinkWrap: true,
 							physics: const NeverScrollableScrollPhysics(),
 							crossAxisCount: 2,
-							childAspectRatio: 1.5,
+							childAspectRatio: 1.45,
 							crossAxisSpacing: 12,
 							mainAxisSpacing: 12,
 							children: [
-								_buildServiceCard(icon: Icons.local_parking_rounded, title: 'Places Libres', color: Colors.indigo[400]!, infoText: '12 places libres'),
-								_buildServiceCard(icon: Icons.account_balance_wallet_rounded, title: 'Portefeuille', color: Colors.amber[600]!, infoText: '5 400 FCFA'),
-								_buildServiceCard(icon: Icons.receipt_long_rounded, title: 'Mes Factures', color: Colors.teal[400]!, infoText: '4 payees'),
-								_buildServiceCard(icon: Icons.map_rounded, title: 'Zones Tarifs', color: Colors.blue[400]!, infoText: '3 zones proches'),
+								_buildServiceCard(
+									icon: Icons.payments_rounded,
+									title: 'Total Encaissé',
+									color: const Color(0xFF00E5FF),
+									infoText: _totalEncaisser,
+								),
+								_buildServiceCard(
+									icon: Icons.receipt_long_rounded,
+									title: 'Stationnements',
+									color: const Color(0xFFE040FB),
+									infoText: _stationnements,
+								),
+								_buildServiceCard(
+									icon: Icons.pending_actions_rounded,
+									title: 'Encaissé non versé',
+									color: Colors.amber[600]!,
+									infoText: _encaisseNonVerse,
+								),
+								_buildServiceCard(
+									icon: Icons.history_edu_rounded,
+									title: 'Dette',
+									color: Colors.greenAccent,
+									infoText: _dette,
+								),
 							],
 						),
 					),
-					const SizedBox(height: 90),
+					const SizedBox(height: 120),
+							],
+						),
+					),
+						),
+					),
 				],
-			),
 		);
 	}
 
-	Widget _buildTicketActifCard(Map<String, String> ticket, int index) {
+	Widget _buildTicketActifCard(ParkingEntry ticket, int index) {
 		// Couleurs différentes pour chaque card
 		final List<List<Color>> gradients = [
 			[const Color(0xFF143F85), const Color(0xFF0D47A1)],
@@ -212,7 +345,11 @@ class AgentDashboardScreen extends StatelessWidget {
 		];
 		final gradient = gradients[index % gradients.length];
 
-		return Container(
+		return GestureDetector(
+			onTap: () {
+				context.push(AppRoutes.agentStationnementDetail, extra: ticket);
+			},
+			child: Container(
 			width: 260,
 			margin: const EdgeInsets.only(right: 14),
 			padding: const EdgeInsets.all(18),
@@ -240,7 +377,7 @@ class AgentDashboardScreen extends StatelessWidget {
 						children: [
 							Expanded(
 								child: Text(
-									ticket['parking']!,
+									ticket.ticketNumber,
 									style: const TextStyle(
 										color: Colors.white,
 										fontSize: 15,
@@ -287,14 +424,14 @@ class AgentDashboardScreen extends StatelessWidget {
 							const Icon(Icons.event_seat_rounded, color: Colors.white54, size: 16),
 							const SizedBox(width: 6),
 							Text(
-								'Place ${ticket['place']}',
+								'Zone ${ticket.zone}',
 								style: const TextStyle(color: Colors.white70, fontSize: 13),
 							),
 							const SizedBox(width: 12),
 							const Icon(Icons.directions_car_rounded, color: Colors.white54, size: 16),
 							const SizedBox(width: 6),
 							Text(
-								ticket['plaque']!,
+								ticket.licensePlate,
 								style: const TextStyle(
 									color: Colors.white70,
 									fontSize: 13,
@@ -311,7 +448,7 @@ class AgentDashboardScreen extends StatelessWidget {
 									const Icon(Icons.timer_rounded, color: Colors.white70, size: 18),
 									const SizedBox(width: 6),
 									Text(
-										ticket['duree']!,
+										'${ticket.entryTime.hour.toString().padLeft(2, '0')}:${ticket.entryTime.minute.toString().padLeft(2, '0')}',
 										style: const TextStyle(
 											color: Colors.white,
 											fontSize: 18,
@@ -321,12 +458,20 @@ class AgentDashboardScreen extends StatelessWidget {
 									),
 								],
 							),
-							const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 16),
+							Text(
+								'~ ${_estimatedCost(ticket.entryTime)} FCFA',
+								style: const TextStyle(
+									color: Colors.greenAccent,
+									fontSize: 14,
+									fontWeight: FontWeight.bold,
+									fontFamily: 'Inter',
+								),
+							),
 						],
 					),
 				],
 			),
-		);
+		));
 	}
 
 	Widget _buildServiceCard({
@@ -336,44 +481,47 @@ class AgentDashboardScreen extends StatelessWidget {
 		required String infoText,
 	}) {
 		return Container(
-			padding: const EdgeInsets.all(16),
+			padding: const EdgeInsets.all(18),
 			decoration: BoxDecoration(
 				color: AppTheme.surface,
 				borderRadius: BorderRadius.circular(20),
-				border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+				border: Border.all(color: Colors.white24, width: 1),
 			),
 			child: Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
-				mainAxisAlignment: MainAxisAlignment.spaceBetween,
 				children: [
-					Container(
-						padding: const EdgeInsets.all(8),
-						decoration: BoxDecoration(
-							color: color.withValues(alpha: 0.5),
-							borderRadius: BorderRadius.circular(12),
-						),
-						child: Icon(icon, color: color, size: 22),
-					),
-					Column(
-						crossAxisAlignment: CrossAxisAlignment.start,
+					Row(
+						mainAxisAlignment: MainAxisAlignment.spaceBetween,
 						children: [
-							Text(
-								title,
-								style: const TextStyle(
-									fontSize: 14,
-									fontWeight: FontWeight.bold,
-									color: Colors.white,
+							Expanded(
+								child: Text(
+									title,
+									style: const TextStyle(
+										color: AppTheme.textSecondary,
+										fontSize: 12,
+										fontWeight: FontWeight.bold,
+										fontFamily: 'Inter',
+									),
+									maxLines: 1,
+									overflow: TextOverflow.ellipsis,
 								),
 							),
-							const SizedBox(height: 2),
-							Text(
-								infoText,
-								style: const TextStyle(
-									fontSize: 11,
-									color: AppTheme.textSecondary,
-								),
-							),
+							const SizedBox(width: 8),
+							Icon(icon, color: color, size: 20),
 						],
+					),
+					const SizedBox(height: 12),
+					FittedBox(
+						fit: BoxFit.scaleDown,
+						child: Text(
+							infoText,
+							style: const TextStyle(
+								color: Colors.white,
+								fontSize: 16,
+								fontWeight: FontWeight.bold,
+								fontFamily: 'Inter',
+							),
+						),
 					),
 				],
 			),

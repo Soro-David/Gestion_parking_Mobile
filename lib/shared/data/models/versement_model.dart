@@ -1,4 +1,4 @@
-import '../../domain/entities/versement.dart';
+import 'package:parking_mobile/shared/domain/entities/versement.dart';
 
 class VersementModel extends Versement {
   const VersementModel({

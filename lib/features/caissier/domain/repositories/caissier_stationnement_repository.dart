@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import '../../../../shared/domain/entities/parking_entry.dart';
 
 abstract class CaissierStationnementRepository {
-  Future<List<ParkingEntry>> getStationnementsEnCours();
+  Future<List<ParkingEntry>> getStationnementsEnCours({bool forceRefresh = false});
 
   Future<String?> extractLicensePlate(XFile imageFile);
 
@@ -14,5 +14,5 @@ abstract class CaissierStationnementRepository {
     String? modele,
   });
 
-  Future<Map<String, dynamic>> checkoutParkingSession(int sessionId);
+  Future<Map<String, dynamic>> checkoutParkingSession(int sessionId, {String? paymentMethod, double? amount});
 }

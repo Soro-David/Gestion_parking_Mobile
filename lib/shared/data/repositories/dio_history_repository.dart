@@ -1,24 +1,39 @@
 import 'package:dio/dio.dart';
 
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/network/dio_error_handler.dart';
-import '../../../../core/network/remote_api_helper.dart';
-import '../../../../shared/data/models/parking_entry_model.dart';
-import '../../../../shared/data/models/parking_exit_model.dart';
-import 'caissier_history_remote_datasource.dart';
+import 'package:parking_mobile/core/network/dio_client.dart';
+import 'package:parking_mobile/core/network/dio_error_handler.dart';
+import 'package:parking_mobile/core/network/remote_api_helper.dart';
+import 'package:parking_mobile/shared/data/models/parking_entry_model.dart';
+import 'package:parking_mobile/shared/data/models/parking_exit_model.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
+import 'package:parking_mobile/shared/domain/entities/parking_exit.dart';
+import 'package:parking_mobile/shared/domain/repositories/history_repository.dart';
 
-class DioCaissierHistoryRemoteDataSource implements CaissierHistoryRemoteDataSource {
-  DioCaissierHistoryRemoteDataSource({Dio? dio})
+/// Implémentation partagée du repository d'historique.
+///
+/// Le [basePath] permet d'injecter le préfixe de route propre à chaque rôle :
+/// - Agent    → basePath = '/attendant'
+/// - Caissier → basePath = '/caissier'
+///
+/// Les endpoints appelés suivent la convention :
+///   GET {basePath}/parking-sessions/history/entries
+///   GET {basePath}/parking-sessions/history/exits
+class DioHistoryRepository implements HistoryRepository {
+  /// [basePath] : préfixe de l'API propre au rôle.
+  ///   - '/attendant' pour l'agent
+  ///   - '/caissier'  pour le caissier
+  DioHistoryRepository({required this.basePath, Dio? dio})
       : _api = RemoteApiHelper(DioClient.create(dio));
 
+  final String basePath;
   final RemoteApiHelper _api;
 
   @override
-  Future<List<ParkingEntryModel>> getEntryHistory() async {
+  Future<List<ParkingEntry>> getEntryHistory() async {
     try {
       final options = await _api.authOptions();
       final response = await _api.getWithFallback(
-        '/caissier/parking-sessions/history/entries',
+        '$basePath/parking-sessions/history/entries',
         options: options,
       );
 
@@ -38,11 +53,11 @@ class DioCaissierHistoryRemoteDataSource implements CaissierHistoryRemoteDataSou
   }
 
   @override
-  Future<List<ParkingExitModel>> getExitHistory() async {
+  Future<List<ParkingExit>> getExitHistory() async {
     try {
       final options = await _api.authOptions();
       final response = await _api.getWithFallback(
-        '/caissier/parking-sessions/history/exits',
+        '$basePath/parking-sessions/history/exits',
         options: options,
       );
 

@@ -10,7 +10,7 @@ import 'package:parking_mobile/features/auth/presentation/pages/login_page.dart'
 // Agent Screens (grouped)
 import 'package:parking_mobile/features/agent/presentation/pages/dashboard/dashboard_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/home/home_screen.dart';
-import 'package:parking_mobile/features/agent/presentation/pages/history/history_screen.dart';
+import 'package:parking_mobile/features/agent/presentation/pages/historique/history_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/parking/parking_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/scan/scan_screen.dart';
 import 'package:parking_mobile/features/agent/presentation/pages/profil/profil_screen.dart';
@@ -34,12 +34,16 @@ import 'package:parking_mobile/features/caissier/presentation/pages/scan/scan_sc
 import 'package:parking_mobile/features/caissier/presentation/pages/profil/profil_screen.dart' as caissier_profile;
 import 'package:parking_mobile/features/caissier/presentation/pages/versement/versement_screen.dart' as caissier_versement;
 import 'package:parking_mobile/features/caissier/presentation/pages/versement/detail_versement_screen.dart' as caissier_versement_detail;
-import 'package:parking_mobile/features/caissier/presentation/pages/stationnement/stationnement_detail_screen.dart' as caissier_stationnement_detail;
+import 'package:parking_mobile/shared/widgets/stationnement_detail_page.dart' as shared_stationnement_detail;
 import 'package:parking_mobile/features/caissier/presentation/pages/historique/entree_detail_screen.dart' as caissier_entree_detail;
 import 'package:parking_mobile/features/caissier/presentation/pages/sortie/sortie_detail_screen.dart' as caissier_sortie_detail;
 import 'package:parking_mobile/features/caissier/presentation/pages/scan/sortie_scan_screen.dart' as caissier_sortie_scan;
 import 'package:parking_mobile/features/caissier/presentation/pages/scan/stationnement_scan_screen.dart' as caissier_stationnement_scan;
 import 'package:parking_mobile/features/caissier/presentation/pages/profil/edit_profile_screen.dart' as caissier_edit_profile;
+import 'package:parking_mobile/features/caissier/presentation/pages/settings/settings_screen.dart' as caissier_settings;
+
+// Shared
+import 'package:parking_mobile/shared/presentation/pages/security_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -99,6 +103,11 @@ class AppRouter {
         builder: (context, state) => const agent_edit_profile.EditProfileScreen(),
       ),
       GoRoute(
+        path: AppRoutes.agentSecurity,
+        name: 'agentSecurity',
+        builder: (context, state) => const SecurityScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.agentSettings,
         name: 'agentSettings',
         builder: (context, state) => const AgentSettingsScreen(),
@@ -137,6 +146,14 @@ class AppRouter {
         name: 'agentSortieDetail',
         builder: (context, state) => agent_sortie_detail.AgentSortieDetailScreen(
           exit: state.extra as ParkingExit,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.agentStationnementDetail,
+        name: 'agentStationnementDetail',
+        builder: (context, state) => shared_stationnement_detail.StationnementDetailPage(
+          entry: state.extra as ParkingEntry,
+          isAgent: true,
         ),
       ),
       GoRoute(
@@ -179,6 +196,16 @@ class AppRouter {
         builder: (context, state) => const caissier_edit_profile.CaissierEditProfileScreen(),
       ),
       GoRoute(
+        path: AppRoutes.caissierSecurity,
+        name: 'caissierSecurity',
+        builder: (context, state) => const SecurityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.caissierSettings,
+        name: 'caissierSettings',
+        builder: (context, state) => const caissier_settings.CaissierSettingsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.caissierVersement,
         name: 'caissierVersement',
         builder: (context, state) => const caissier_versement.CaissierVersementScreen(),
@@ -193,8 +220,9 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.caissierStationnementDetail,
         name: 'caissierStationnementDetail',
-        builder: (context, state) => caissier_stationnement_detail.CaissierStationnementDetailScreen(
-          stationnement: state.extra as Map<String, dynamic>,
+        builder: (context, state) => shared_stationnement_detail.StationnementDetailPage(
+          entry: state.extra as ParkingEntry,
+          isAgent: false,
         ),
       ),
       GoRoute(

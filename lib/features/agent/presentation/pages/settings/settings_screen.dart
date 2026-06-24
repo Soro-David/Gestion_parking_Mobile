@@ -53,7 +53,9 @@ class AgentSettingsScreen extends StatelessWidget {
 					style: TextStyle(color: AppTheme.textSecondary),
 				),
 				const SizedBox(height: 18),
-				_tile(Icons.person_outline_rounded, 'Profil agent', () {}),
+				_tile(Icons.person_outline_rounded, 'Profil agent', () {
+					context.push(AppRoutes.agentProfile);
+				}),
 				_tile(Icons.notifications_none_rounded, 'Notifications', () {}),
 				_tile(Icons.lock_outline_rounded, 'Securite', () {}),
 				_tile(Icons.logout_rounded, 'Deconnexion', () => _handleLogout(context), isDanger: true),
