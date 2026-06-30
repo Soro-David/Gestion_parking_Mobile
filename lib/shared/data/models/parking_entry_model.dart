@@ -13,6 +13,7 @@ class ParkingEntryModel extends ParkingEntry {
     super.notes,
     super.photoUrl,
     super.pricePerHour,
+    super.parkingId,
   });
 
   factory ParkingEntryModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +30,7 @@ class ParkingEntryModel extends ParkingEntry {
       agentName: json['agent_name'],
       notes: json['notes'],
       photoUrl: json['photo_url'],
+      parkingId: json['parking_id'] as int?,
     );
   }
 
@@ -58,6 +60,7 @@ class ParkingEntryModel extends ParkingEntry {
       notes: json['notes'],
       photoUrl: json['photo_url'] ?? json['photoUrl'],
       pricePerHour: (json['price_per_hour'] as num?)?.toDouble(),
+      parkingId: json['parking_id'] as int?,
     );
   }
 

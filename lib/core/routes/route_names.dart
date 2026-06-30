@@ -1,5 +1,11 @@
 // Application Routes
 class AppRoutes {
+  // Notifications partagées
+  static const String notificationHistory = '/notifications/history';
+  static const String notificationCategories = '/notifications/categories';
+  static const String notificationDetail = '/notifications/detail';
+  static const String signalementsList = '/signalements/list';
+
   // Onboarding & Auth
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -23,6 +29,7 @@ class AppRoutes {
   static const String agentEntreeDetail = '/agent/history/entree';
   static const String agentSortieDetail = '/agent/history/sortie';
   static const String agentParkingDetail = '/agent/parking/detail';
+  static const String agentNotifications = '/agent/settings/notifications';
 
   // Caissier Routes
   static const String caissierHome = '/caissier/home';
@@ -42,4 +49,8 @@ class AppRoutes {
   static const String caissierEntreeDetail = '/caissier/history/entree';
   static const String caissierSortieDetail = '/caissier/history/sortie';
   static const String caissierSortieScan = '/caissier/history/scan';
+  static const String caissierNotifications = '/caissier/settings/notifications';
+
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
 }

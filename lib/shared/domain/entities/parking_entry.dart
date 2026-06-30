@@ -12,6 +12,8 @@ class ParkingEntry {
   /// Tarif horaire applicable (en FCFA). Vient du backend.
   /// null = non connu (fallback à un calcul local).
   final double? pricePerHour;
+  /// ID du parking associé à cette session (utilisé pour les signalements).
+  final int? parkingId;
 
   const ParkingEntry({
     required this.id,
@@ -25,5 +27,6 @@ class ParkingEntry {
     this.notes,
     this.photoUrl,
     this.pricePerHour,
+    this.parkingId,
   });
 }

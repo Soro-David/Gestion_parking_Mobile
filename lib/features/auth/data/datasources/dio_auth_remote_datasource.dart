@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -15,11 +16,19 @@ class DioAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<UserModel> login(String email, String password) async {
     try {
+      String? fcmToken;
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+      } catch (e) {
+        debugPrint('[FCM] Error getting token during login: $e');
+      }
+
       final response = await _dio.post(
         '/api/auth/login',
         data: {
           'login': email,
           'password': password,
+          if (fcmToken != null) 'fcm_token': fcmToken,
         },
       );
 
@@ -169,6 +178,52 @@ class DioAuthRemoteDataSource implements AuthRemoteDataSource {
       }
     } on DioException catch (e) {
       throw Exception(DioErrorHandler.message(e, fallback: 'Erreur lors de la mise à jour du profil'));
+    } catch (e) {
+      throw Exception('Une erreur inattendue est survenue : ${e.toString().replaceAll('Exception: ', '')}');
+    }
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    try {
+      final response = await _dio.post(
+        '/api/auth/password/forgot',
+        data: {
+          'email': email,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Échec de l\'envoi du lien de réinitialisation.');
+      }
+    } on DioException catch (e) {
+      throw Exception(DioErrorHandler.message(e, fallback: 'Erreur lors de la demande de réinitialisation'));
+    } catch (e) {
+      throw Exception('Une erreur inattendue est survenue : ${e.toString().replaceAll('Exception: ', '')}');
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/api/auth/password/reset',
+        data: {
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Échec de la réinitialisation du mot de passe.');
+      }
+    } on DioException catch (e) {
+      throw Exception(DioErrorHandler.message(e, fallback: 'Erreur lors de la réinitialisation du mot de passe'));
     } catch (e) {
       throw Exception('Une erreur inattendue est survenue : ${e.toString().replaceAll('Exception: ', '')}');
     }

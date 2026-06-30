@@ -99,16 +99,10 @@ class _CaissierStationnementScreenState
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
-          // ── Header gradient ─────────────────────────────────
+          // ── Header bleu foncé ───────────────────────────────
           Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0D1B2E), Color(0xFF143F85)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(28)),
+              color: AppTheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Color(0x40143F85),
@@ -161,8 +155,8 @@ class _CaissierStationnementScreenState
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.local_parking_rounded,
-                                  color: AppTheme.accent, size: 18),
+                              const Icon(Icons.directions_car_rounded,
+                                  color: Colors.white, size: 18),
                               const SizedBox(width: 6),
                               Text(
                                 '${_allEntries.length}',
@@ -182,27 +176,24 @@ class _CaissierStationnementScreenState
                     // Barre de recherche
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.15)),
                       ),
                       child: TextField(
                         style: const TextStyle(
-                            color: Colors.white, fontFamily: 'Inter'),
+                            color: Colors.black87, fontFamily: 'Inter'),
                         decoration: InputDecoration(
                           hintText: 'Plaque, zone, ticket, agent…',
-                          hintStyle: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.45),
+                          hintStyle: const TextStyle(
+                              color: Colors.black38,
                               fontFamily: 'Inter',
                               fontSize: 14),
-                          prefixIcon: Icon(Icons.search_rounded,
-                              color: Colors.white.withValues(alpha: 0.5)),
+                          prefixIcon: const Icon(Icons.search_rounded,
+                              color: Colors.black54),
                           suffixIcon: _search.isNotEmpty
                               ? IconButton(
-                                  icon: Icon(Icons.clear_rounded,
-                                      color: Colors.white
-                                          .withValues(alpha: 0.6)),
+                                  icon: const Icon(Icons.clear_rounded,
+                                      color: Colors.black54),
                                   onPressed: () {
                                     _applyFilter('');
                                     FocusScope.of(context).unfocus();

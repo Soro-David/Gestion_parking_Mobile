@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
+import 'package:parking_mobile/shared/widgets/signalement_bottom_sheet.dart';
 
 class AgentEntreeDetailScreen extends StatelessWidget {
 	final ParkingEntry entry;
@@ -36,7 +37,7 @@ class AgentEntreeDetailScreen extends StatelessWidget {
 			backgroundColor: AppTheme.background,
 			appBar: AppBar(
 				toolbarHeight: 80,
-				backgroundColor: Colors.transparent,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
 				leading: IconButton(
 					icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -52,15 +53,6 @@ class AgentEntreeDetailScreen extends StatelessWidget {
 					),
 				),
 				centerTitle: true,
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
-					),
-				),
 			),
 			body: SingleChildScrollView(
 				child: Column(
@@ -290,17 +282,14 @@ class AgentEntreeDetailScreen extends StatelessWidget {
 									const SizedBox(height: 16),
 									GestureDetector(
 										onTap: () {
-											ScaffoldMessenger.of(context).showSnackBar(
-												const SnackBar(
-													content: Row(
-														children: [
-															Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-															SizedBox(width: 10),
-															Text('Signalement enregistré.'),
-														],
-													),
-													backgroundColor: Colors.redAccent,
-													behavior: SnackBarBehavior.floating,
+											showModalBottomSheet<bool>(
+												context: context,
+												isScrollControlled: true,
+												backgroundColor: Colors.transparent,
+												builder: (ctx) => SignalementBottomSheet(
+													licensePlate: entry.licensePlate,
+													parkingId: entry.parkingId ?? 1,
+													parentContext: context,
 												),
 											);
 										},
@@ -308,7 +297,7 @@ class AgentEntreeDetailScreen extends StatelessWidget {
 											width: double.infinity,
 											padding: const EdgeInsets.symmetric(vertical: 16),
 											decoration: BoxDecoration(
-												color: Colors.transparent,
+												color: Colors.redAccent.withValues(alpha: 0.15),
 												borderRadius: BorderRadius.circular(16),
 												border: Border.all(color: Colors.redAccent, width: 1.5),
 											),

@@ -16,4 +16,13 @@ abstract class AuthRepository {
     String? password,
     String? avatarPath,
   });
+
+  Future<void> forgotPassword(String email);
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  });
 }

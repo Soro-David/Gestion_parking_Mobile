@@ -11,6 +11,8 @@ class ParkingExit {
   final String zone;
   final String? agentName;
   final String? notes;
+  /// ID du parking associé à cette session (utilisé pour les signalements).
+  final int? parkingId;
 
   const ParkingExit({
     required this.id,
@@ -25,5 +27,6 @@ class ParkingExit {
     required this.zone,
     this.agentName,
     this.notes,
+    this.parkingId,
   });
 }

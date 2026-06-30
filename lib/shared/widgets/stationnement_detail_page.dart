@@ -4,6 +4,7 @@ import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
 import 'package:parking_mobile/features/caissier/presentation/providers/caissier_stationnement_provider.dart';
 import 'package:parking_mobile/features/agent/presentation/providers/agent_stationnement_provider.dart';
+import 'package:parking_mobile/shared/widgets/signalement_bottom_sheet.dart';
 
 /// Page de détail d'un stationnement en cours.
 /// Utilisée à la fois par le Caissier et l'Agent.
@@ -50,7 +51,7 @@ class StationnementDetailPage extends StatelessWidget {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         toolbarHeight: 80,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -66,18 +67,28 @@ class StationnementDetailPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0D1B2E), Color(0xFF143F85)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 26),
+            tooltip: 'Signaler un problème',
+            onPressed: () {
+              showModalBottomSheet<bool>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => SignalementBottomSheet(
+                  licensePlate: entry.licensePlate,
+                  parkingId: entry.parkingId ?? 1,
+                  parentContext: context,
+                ),
+              );
+            },
           ),
-        ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -159,63 +170,66 @@ class StationnementDetailPage extends StatelessWidget {
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // ── Bouton Enregistrer la sortie ───────────────────────────
-            _ActionButton(
-              icon: Icons.logout_rounded,
-              label: 'Enregistrer la sortie',
-              gradient: const LinearGradient(
-                colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-              ),
-              onTap: () {
-                showModalBottomSheet<bool>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (ctx) => _PaymentBottomSheet(
-                    entry: entry,
-                    estimatedCost: _estimatedCost(entry.entryTime, entry.pricePerHour) ?? 0,
-                    isAgent: isAgent,
-                    parentContext: context,
-                  ),
-                ).then((success) {
-                  if (success == true && context.mounted) {
-                    Navigator.of(context).pop(); // Retour à la liste et actualiser
-                  }
-                });
-              },
-            ),
-
-            const SizedBox(height: 14),
-
-            // ── Bouton Signaler ─────────────────────────────────────
-            _ActionButton(
-              icon: Icons.warning_amber_rounded,
-              label: 'Signaler un problème',
-              isOutlined: true,
-              outlineColor: Colors.redAccent,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(Icons.warning_amber_rounded,
-                            color: Colors.white, size: 20),
-                        SizedBox(width: 10),
-                        Text('Signalement enregistré.'),
-                      ],
-                    ),
-                    backgroundColor: Colors.redAccent,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              },
-            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Bouton Enregistrer la sortie ───────────────────────────
+              _ActionButton(
+                icon: Icons.logout_rounded,
+                label: 'Enregistrer la sortie',
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                ),
+                onTap: () {
+                  showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (ctx) => _PaymentBottomSheet(
+                      entry: entry,
+                      estimatedCost: _estimatedCost(entry.entryTime, entry.pricePerHour) ?? 0,
+                      isAgent: isAgent,
+                      parentContext: context,
+                    ),
+                  ).then((success) {
+                    if (success == true && context.mounted) {
+                      Navigator.of(context).pop(); // Retour à la liste et actualiser
+                    }
+                  });
+                },
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Bouton Signaler ─────────────────────────────────────
+              _ActionButton(
+                icon: Icons.warning_amber_rounded,
+                label: 'Signaler un problème',
+                isOutlined: true,
+                outlineColor: Colors.redAccent,
+                backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                onTap: () {
+                  showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (ctx) => SignalementBottomSheet(
+                      licensePlate: entry.licensePlate,
+                      parkingId: entry.parkingId ?? 1,
+                      parentContext: context,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -479,6 +493,7 @@ class _ActionButton extends StatelessWidget {
   final Gradient? gradient;
   final bool isOutlined;
   final Color? outlineColor;
+  final Color? backgroundColor;
 
   const _ActionButton({
     required this.icon,
@@ -487,6 +502,7 @@ class _ActionButton extends StatelessWidget {
     this.gradient,
     this.isOutlined = false,
     this.outlineColor,
+    this.backgroundColor,
   });
 
   @override
@@ -498,7 +514,7 @@ class _ActionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: isOutlined ? null : gradient,
-          color: isOutlined ? Colors.transparent : null,
+          color: isOutlined ? (backgroundColor ?? Colors.transparent) : backgroundColor,
           borderRadius: BorderRadius.circular(16),
           border: isOutlined
               ? Border.all(color: outlineColor ?? Colors.white, width: 1.5)

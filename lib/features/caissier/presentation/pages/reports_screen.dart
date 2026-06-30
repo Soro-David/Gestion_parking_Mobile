@@ -184,10 +184,6 @@ class _CashierReportsScreenState extends State<CashierReportsScreen> {
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

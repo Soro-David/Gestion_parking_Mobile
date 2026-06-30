@@ -4,6 +4,8 @@ import 'package:parking_mobile/features/auth/presentation/providers/auth_provide
 import 'package:parking_mobile/shared/domain/entities/user.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:parking_mobile/core/constants/api_constants.dart';
 
 class CaissierProfilScreen extends StatefulWidget {
   const CaissierProfilScreen({super.key});
@@ -259,7 +261,7 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
                               context: context,
                               icon: Icons.notifications_none_rounded,
                               label: 'Notifications',
-                              onTap: () {},
+                              onTap: () => context.push(AppRoutes.notificationHistory),
                             ),
                             _buildDivider(),
                             _buildMenuItem(
@@ -284,7 +286,21 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
                               context: context,
                               icon: Icons.privacy_tip_outlined,
                               label: 'Politique de confidentialité',
-                              onTap: () {},
+                              onTap: () async {
+                                final url = Uri.parse('${ApiConstants.baseUrl}/politique-confidentialite');
+                                if (await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                                  // Success
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Impossible d\'ouvrir la politique de confidentialité'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                             ),
                             _buildDivider(),
                             _buildMenuItem(
@@ -293,6 +309,15 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
                               label: 'Paramètres',
                               onTap: () {
                                 context.push(AppRoutes.caissierSettings);
+                              },
+                            ),
+                            _buildDivider(),
+                            _buildMenuItem(
+                              context: context,
+                              icon: Icons.warning_amber_rounded,
+                              label: 'Signalements',
+                              onTap: () {
+                                context.push(AppRoutes.signalementsList);
                               },
                             ),
                           ],
@@ -402,10 +427,17 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           children: [
-            Icon(icon, color: AppTheme.textSecondary, size: 24),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -418,9 +450,9 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppTheme.textSecondary,
+              color: Colors.white.withValues(alpha: 0.4),
               size: 20,
             ),
           ],

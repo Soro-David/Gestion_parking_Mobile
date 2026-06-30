@@ -7,6 +7,9 @@ import 'package:parking_mobile/shared/domain/entities/user.dart';
 import 'package:parking_mobile/features/caissier/presentation/providers/caissier_stat_provider.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
 import 'package:parking_mobile/features/caissier/presentation/providers/caissier_stationnement_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parking_mobile/shared/notifications/presentation/cubit/notification_cubit.dart';
+import 'package:parking_mobile/shared/notifications/presentation/cubit/notification_state.dart';
 
 class CaissierDashboardScreen extends StatefulWidget {
   const CaissierDashboardScreen({super.key});
@@ -70,11 +73,11 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
     }
   }
 
-  int _estimatedCost(DateTime entryTime) {
+  int _estimatedCost(DateTime entryTime, double? pricePerHour) {
+    final double rate = pricePerHour ?? 500.0;
     final diff = DateTime.now().difference(entryTime);
-    final hours = (diff.inMinutes / 60.0).ceil();
-    final cost = hours * 500;
-    return cost > 0 ? cost : 500;
+    final hours = diff.inMinutes <= 0 ? 1 : ((diff.inMinutes / 60.0).ceil());
+    return (hours * rate).round();
   }
 
   Future<void> _loadActiveParkings() async {
@@ -165,12 +168,23 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Badge(
-                        label: Text('3'),
-                        child: Icon(Icons.notifications_none_rounded, color: Colors.white),
-                      ),
-                      onPressed: () {},
+                    BlocBuilder<NotificationCubit, NotificationState>(
+                      builder: (context, state) {
+                        final count = state is NotificationLoaded ? state.unreadCount : 0;
+                        if (count > 0) {
+                          return IconButton(
+                            icon: Badge(
+                              label: Text('$count'),
+                              child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                            ),
+                            onPressed: () => context.push(AppRoutes.notificationHistory),
+                          );
+                        }
+                        return IconButton(
+                          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                          onPressed: () => context.push(AppRoutes.notificationHistory),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -412,7 +426,7 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '~ ${_estimatedCost(tx.entryTime)} FCFA',
+                '~ ${_estimatedCost(tx.entryTime, tx.pricePerHour)} FCFA',
                 style: const TextStyle(
                   color: Colors.greenAccent,
                   fontSize: 18,

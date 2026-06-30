@@ -18,11 +18,11 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
 	int _currentIndex = 0;
 	bool _isScanVisible = false;
 
-	List<Widget> get _screens => const [
-				AgentDashboardScreen(),
-				AgentHistoryScreen(),
-				AgentVersementScreen(),
-				AgentStationnementScreen(),
+	List<Widget> get _screens => [
+				const AgentDashboardScreen(),
+				AgentHistoryScreen(isActive: _currentIndex == 1),
+				const AgentVersementScreen(),
+				const AgentStationnementScreen(),
 			];
 
 	void _onTabChanged(int index) {

@@ -19,12 +19,12 @@ class _CaissierHomeScreenState extends State<CaissierHomeScreen> {
   int _currentIndex = 0;
   bool _isScanVisible = false;
 
-  final List<Widget> _screens = const [
-    CaissierDashboardScreen(),      // 0 - Tableau
-    CaissierHistoryScreen(),        // 1 - Historique
-    CaissierVersementScreen(),      // 2 - Versement
-    CaissierStationnementScreen(),  // 3 - Stationnement
-    CashierReportsScreen(),         // 4 - Rapport
+  List<Widget> get _screens => [
+    const CaissierDashboardScreen(),      // 0 - Tableau
+    CaissierHistoryScreen(isActive: _currentIndex == 1),        // 1 - Historique
+    const CaissierVersementScreen(),      // 2 - Versement
+    const CaissierStationnementScreen(),  // 3 - Stationnement
+    const CashierReportsScreen(),         // 4 - Rapport
   ];
 
   void _onTabChanged(int index) {

@@ -6,6 +6,8 @@ import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:parking_mobile/features/auth/presentation/pages/splash_page.dart';
 import 'package:parking_mobile/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:parking_mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:parking_mobile/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:parking_mobile/features/auth/presentation/pages/reset_password_page.dart';
 
 // Agent Screens (grouped)
 import 'package:parking_mobile/features/agent/presentation/pages/dashboard/dashboard_screen.dart';
@@ -44,6 +46,12 @@ import 'package:parking_mobile/features/caissier/presentation/pages/settings/set
 
 // Shared
 import 'package:parking_mobile/shared/presentation/pages/security_screen.dart';
+import 'package:parking_mobile/shared/notifications/presentation/pages/notification_history_page.dart';
+import 'package:parking_mobile/shared/notifications/presentation/pages/notification_categories_page.dart';
+import 'package:parking_mobile/shared/notifications/presentation/pages/notification_detail_page.dart';
+import 'package:parking_mobile/shared/notifications/domain/entities/app_notification.dart';
+import 'package:parking_mobile/shared/presentation/pages/signalements_list_page.dart';
+
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -64,6 +72,20 @@ class AppRouter {
         path: AppRoutes.login,
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.resetPassword}/:token',
+        name: 'resetPassword',
+        builder: (context, state) {
+          final token = state.pathParameters['token'] ?? '';
+          final email = state.uri.queryParameters['email'] ?? '';
+          return ResetPasswordPage(token: token, email: email);
+        },
       ),
 
       // Agent Routes
@@ -111,6 +133,11 @@ class AppRouter {
         path: AppRoutes.agentSettings,
         name: 'agentSettings',
         builder: (context, state) => const AgentSettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.agentNotifications,
+        name: 'agentNotifications',
+        builder: (context, state) => const NotificationHistoryPage(),
       ),
       GoRoute(
         path: AppRoutes.agentVersement,
@@ -206,6 +233,11 @@ class AppRouter {
         builder: (context, state) => const caissier_settings.CaissierSettingsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.caissierNotifications,
+        name: 'caissierNotifications',
+        builder: (context, state) => const NotificationHistoryPage(),
+      ),
+      GoRoute(
         path: AppRoutes.caissierVersement,
         name: 'caissierVersement',
         builder: (context, state) => const caissier_versement.CaissierVersementScreen(),
@@ -248,6 +280,31 @@ class AppRouter {
         path: AppRoutes.caissierStationnementScan,
         name: 'caissierStationnementScan',
         builder: (context, state) => const caissier_stationnement_scan.CaissierStationnementScanScreen(),
+      ),
+
+      // Shared Notification Routes
+      GoRoute(
+        path: AppRoutes.notificationHistory,
+        name: 'notificationHistory',
+        builder: (context, state) => const NotificationHistoryPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationCategories,
+        name: 'notificationCategories',
+        builder: (context, state) => const NotificationCategoriesPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationDetail,
+        name: 'notificationDetail',
+        builder: (context, state) {
+          final notification = state.extra as AppNotification;
+          return NotificationDetailPage(notification: notification);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.signalementsList,
+        name: 'signalementsList',
+        builder: (context, state) => const SignalementsListPage(),
       ),
     ],
   );

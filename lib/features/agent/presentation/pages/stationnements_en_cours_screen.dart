@@ -111,17 +111,8 @@ class _AgentStationnementEnCoursScreenState
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
       ),
       body: Column(
         children: [
@@ -130,26 +121,24 @@ class _AgentStationnementEnCoursScreenState
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             child: TextField(
               onChanged: _filter,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.black87, fontFamily: 'Inter'),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppTheme.surface,
+                fillColor: Colors.white,
                 prefixIcon: const Icon(Icons.search_rounded,
-                    color: AppTheme.textSecondary),
+                    color: Colors.black54),
                 hintText: 'Rechercher par immatriculation...',
                 hintStyle: const TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: Colors.black38,
                     fontSize: 14,
                     fontFamily: 'Inter'),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -234,7 +223,7 @@ class _AgentStationnementEnCoursScreenState
                     ),
                     child: Icon(
                       _searchQuery.isEmpty
-                          ? Icons.local_parking_rounded
+                          ? Icons.directions_car_rounded
                           : Icons.search_off_rounded,
                       size: 56,
                       color: Colors.white.withValues(alpha: 0.5),

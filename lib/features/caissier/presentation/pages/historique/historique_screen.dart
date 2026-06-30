@@ -5,7 +5,8 @@ import 'package:parking_mobile/shared/domain/entities/parking_exit.dart';
 import 'package:parking_mobile/features/caissier/presentation/providers/caissier_history_provider.dart';
 
 class CaissierHistoryScreen extends StatelessWidget {
-  const CaissierHistoryScreen({super.key});
+  final bool isActive;
+  const CaissierHistoryScreen({super.key, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +64,8 @@ class CaissierHistoryScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            CaissierHistoriqueEntreeScreen(),
-            CaissierHistoriqueSortieScreen(),
+            CaissierHistoriqueEntreeScreen(isActive: isActive),
+            CaissierHistoriqueSortieScreen(isActive: isActive),
           ],
         ),
       ),
@@ -74,7 +75,8 @@ class CaissierHistoryScreen extends StatelessWidget {
 
 // Entrée list
 class CaissierHistoriqueEntreeScreen extends StatefulWidget {
-  const CaissierHistoriqueEntreeScreen({super.key});
+  final bool isActive;
+  const CaissierHistoriqueEntreeScreen({super.key, this.isActive = false});
 
   @override
   State<CaissierHistoriqueEntreeScreen> createState() => _CaissierHistoriqueEntreeScreenState();
@@ -91,6 +93,14 @@ class _CaissierHistoriqueEntreeScreenState extends State<CaissierHistoriqueEntre
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant CaissierHistoriqueEntreeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadHistory();
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -238,41 +248,47 @@ class _CaissierHistoriqueEntreeScreenState extends State<CaissierHistoriqueEntre
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final e = list[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
-                ],
-              ),
-              Text(_formatDateTime(e.entryTime), style: const TextStyle(color: Colors.white70)),
-            ],
-          ),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _loadHistory,
+      color: AppTheme.secondary,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final e = list[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
+                Text(_formatDateTime(e.entryTime), style: const TextStyle(color: Colors.white70)),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
 // Sortie list
 class CaissierHistoriqueSortieScreen extends StatefulWidget {
-  const CaissierHistoriqueSortieScreen({super.key});
+  final bool isActive;
+  const CaissierHistoriqueSortieScreen({super.key, this.isActive = false});
 
   @override
   State<CaissierHistoriqueSortieScreen> createState() => _CaissierHistoriqueSortieScreenState();
@@ -289,6 +305,14 @@ class _CaissierHistoriqueSortieScreenState extends State<CaissierHistoriqueSorti
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant CaissierHistoriqueSortieScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadHistory();
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -436,48 +460,53 @@ class _CaissierHistoriqueSortieScreenState extends State<CaissierHistoriqueSorti
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final e = list[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(_formatDateTime(e.exitTime), style: const TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${e.amount.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Inter',
+    return RefreshIndicator(
+      onRefresh: _loadHistory,
+      color: AppTheme.secondary,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final e = list[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(_formatDateTime(e.exitTime), style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${e.amount.toStringAsFixed(0)} FCFA',
+                      style: const TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

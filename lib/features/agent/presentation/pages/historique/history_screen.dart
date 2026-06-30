@@ -4,7 +4,8 @@ import 'package:parking_mobile/features/agent/presentation/pages/historique/hist
 import 'package:parking_mobile/features/agent/presentation/pages/historique/historique_sortie_screen.dart';
 
 class AgentHistoryScreen extends StatelessWidget {
-	const AgentHistoryScreen({super.key});
+	final bool isActive;
+	const AgentHistoryScreen({super.key, this.isActive = false});
 
 	@override
 	Widget build(BuildContext context) {
@@ -35,10 +36,10 @@ class AgentHistoryScreen extends StatelessWidget {
 						],
 					),
 				),
-				body: const TabBarView(
+				body: TabBarView(
 					children: [
-						HistoriqueEntreeScreen(),
-						HistoriqueSortieScreen(),
+						HistoriqueEntreeScreen(isActive: isActive),
+						HistoriqueSortieScreen(isActive: isActive),
 					],
 				),
 			),

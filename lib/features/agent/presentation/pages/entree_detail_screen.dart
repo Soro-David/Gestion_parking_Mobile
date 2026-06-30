@@ -36,7 +36,7 @@ class AgentEntreeDetailScreen extends StatelessWidget {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         toolbarHeight: 80,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -52,15 +52,6 @@ class AgentEntreeDetailScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -312,7 +303,7 @@ class AgentEntreeDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.transparent,
+                        color: Colors.redAccent.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.redAccent, width: 1.5),
                       ),

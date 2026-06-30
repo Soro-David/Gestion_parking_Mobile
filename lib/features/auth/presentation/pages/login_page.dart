@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
@@ -41,6 +42,26 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // Rebuild on focus change to update input glows
     _emailFocus.addListener(() => setState(() {}));
     _passwordFocus.addListener(() => setState(() {}));
+
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberMe = prefs.getBool('remember_me') ?? false;
+      if (rememberMe) {
+        final email = prefs.getString('saved_email') ?? '';
+        final password = prefs.getString('saved_password') ?? '';
+        setState(() {
+          _rememberMe = true;
+          _emailController.text = email;
+          _passwordController.text = password;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading saved credentials: $e');
+    }
   }
 
   @override
@@ -64,6 +85,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         final password = _passwordController.text;
         
         final userModel = await AuthProvider.repository.login(email, password);
+
+        if (!mounted) return;
+
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          if (_rememberMe) {
+            await prefs.setBool('remember_me', true);
+            await prefs.setString('saved_email', email);
+            await prefs.setString('saved_password', password);
+          } else {
+            await prefs.setBool('remember_me', false);
+            await prefs.remove('saved_email');
+            await prefs.remove('saved_password');
+          }
+        } catch (e) {
+          debugPrint('Error saving credentials: $e');
+        }
 
         if (!mounted) return;
 
@@ -498,23 +536,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         // Mot de passe oublié ?
         TextButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                backgroundColor: AppTheme.surface,
-                content: Row(
-                  children: const [
-                    Icon(Icons.info_outline_rounded, color: AppTheme.accent),
-                    SizedBox(width: 12),
-                    Text(
-                      'Option de récupération envoyée par email.',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            );
+            context.push(AppRoutes.forgotPassword);
           },
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,

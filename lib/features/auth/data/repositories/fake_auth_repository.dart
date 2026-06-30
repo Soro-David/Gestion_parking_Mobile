@@ -91,4 +91,19 @@ class FakeAuthRepository implements AuthRepository {
       role: UserRole.agent,
     );
   }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
 }

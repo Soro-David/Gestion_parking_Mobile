@@ -14,6 +14,7 @@ class ParkingExitModel extends ParkingExit {
     required super.zone,
     super.agentName,
     super.notes,
+    super.parkingId,
   });
 
   factory ParkingExitModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +35,7 @@ class ParkingExitModel extends ParkingExit {
       zone: json['zone'] ?? '',
       agentName: json['agent_name'],
       notes: json['notes'],
+      parkingId: json['parking_id'] as int?,
     );
   }
 
@@ -82,6 +84,7 @@ class ParkingExitModel extends ParkingExit {
       zone: json['parking_name'] ?? json['parkingName'] ?? json['zone'] ?? 'Parking',
       agentName: json['agent_name'] ?? json['agentName'] ?? 'Agent',
       notes: json['notes'],
+      parkingId: json['parking_id'] as int?,
     );
   }
 

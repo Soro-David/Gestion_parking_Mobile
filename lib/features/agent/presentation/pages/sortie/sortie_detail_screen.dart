@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_exit.dart';
+import 'package:parking_mobile/shared/widgets/signalement_bottom_sheet.dart';
 
 class AgentSortieDetailScreen extends StatelessWidget {
 	final ParkingExit exit;
@@ -35,7 +36,7 @@ class AgentSortieDetailScreen extends StatelessWidget {
 			backgroundColor: AppTheme.background,
 			appBar: AppBar(
 				toolbarHeight: 80,
-				backgroundColor: Colors.transparent,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
 				iconTheme: const IconThemeData(color: Colors.white),
 				title: const Text(
@@ -47,15 +48,25 @@ class AgentSortieDetailScreen extends StatelessWidget {
 						fontWeight: FontWeight.bold,
 					),
 				),
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
+				actions: [
+					IconButton(
+						icon: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 26),
+						tooltip: 'Signaler un problème',
+						onPressed: () {
+							showModalBottomSheet<bool>(
+								context: context,
+								isScrollControlled: true,
+								backgroundColor: Colors.transparent,
+								builder: (ctx) => SignalementBottomSheet(
+									licensePlate: exit.licensePlate,
+									parkingId: exit.parkingId ?? 1,
+									parentContext: context,
+								),
+							);
+						},
 					),
-				),
+					const SizedBox(width: 8),
+				],
 			),
 			body: ListView(
 				padding: const EdgeInsets.all(24),
@@ -276,15 +287,20 @@ class AgentSortieDetailScreen extends StatelessWidget {
 					const SizedBox(height: 12),
 					OutlinedButton.icon(
 						onPressed: () {
-							ScaffoldMessenger.of(context).showSnackBar(
-								const SnackBar(
-									content: Text('Signalement enregistré.', style: TextStyle(fontFamily: 'Inter')),
-									backgroundColor: Colors.redAccent,
+							showModalBottomSheet<bool>(
+								context: context,
+								isScrollControlled: true,
+								backgroundColor: Colors.transparent,
+								builder: (ctx) => SignalementBottomSheet(
+									licensePlate: exit.licensePlate,
+									parkingId: exit.parkingId ?? 1,
+									parentContext: context,
 								),
 							);
 						},
 						style: OutlinedButton.styleFrom(
 							foregroundColor: Colors.redAccent,
+							backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
 							side: const BorderSide(color: Colors.redAccent, width: 1.5),
 							padding: const EdgeInsets.symmetric(vertical: 16),
 							shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -1,5 +1,1 @@
-package com.example.parking_mobile
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity : FlutterActivity()
+// Deleted in favor of the new package path

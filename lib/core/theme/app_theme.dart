@@ -85,4 +85,60 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF1F5F9),
+      colorScheme: const ColorScheme.light(
+        primary: primary,
+        secondary: secondary,
+        tertiary: accent,
+        surface: Colors.white,
+      ),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0F172A),
+          letterSpacing: -0.5,
+          fontFamily: 'Roboto',
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0F172A),
+          fontFamily: 'Roboto',
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          color: Color(0xFF475569),
+          height: 1.5,
+          fontFamily: 'Roboto',
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF475569),
+          fontFamily: 'Roboto',
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
 }
