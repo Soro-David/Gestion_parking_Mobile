@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
@@ -28,12 +29,26 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
   List<ParkingEntry> _activeParkings = [];
   bool _isLoadingParkings = true;
 
+  Timer? _refreshTimer;
+
   @override
   void initState() {
     super.initState();
     _loadProfile();
     _loadStats();
     _loadActiveParkings();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        _loadStats();
+        _loadActiveParkings();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -113,234 +128,256 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ── Header avec avatar + recherche ──
-          Container(
-            padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-            decoration: const BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
+    return BlocListener<NotificationCubit, NotificationState>(
+      listener: (context, state) {
+        if (state is NotificationLoaded) {
+          _loadStats();
+          _loadActiveParkings();
+        }
+      },
+      child: Column(
+        children: [
+          // ── Header avec avatar + recherche ──
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+              decoration: const BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
               ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            await context.push(AppRoutes.caissierProfile);
-                            _loadProfile();
-                          },
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.primaryGradient,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white24, width: 1.5),
-                              image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                                  ? DecorationImage(
-                                      image: NetworkImage(_avatarUrl!),
-                                      fit: BoxFit.cover,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              await context.push(AppRoutes.caissierProfile);
+                              _loadProfile();
+                            },
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white24, width: 1.5),
+                                image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                                    ? DecorationImage(
+                                        image: NetworkImage(_avatarUrl!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+                                  ? const Center(
+                                      child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
                                     )
                                   : null,
                             ),
-                            child: (_avatarUrl == null || _avatarUrl!.isEmpty)
-                                ? const Center(
-                                    child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
-                                  )
-                                : null,
                           ),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Session Caissier 👋', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, fontFamily: 'Inter')),
-                            Text(_userName, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Inter')),
-                          ],
-                        ),
-                      ],
-                    ),
-                    BlocBuilder<NotificationCubit, NotificationState>(
-                      builder: (context, state) {
-                        final count = state is NotificationLoaded ? state.unreadCount : 0;
-                        if (count > 0) {
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Bonjour 👋', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+                              Text(_userName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      BlocBuilder<NotificationCubit, NotificationState>(
+                        builder: (context, state) {
+                          final count = state is NotificationLoaded ? state.unreadCount : 0;
+                          if (count > 0) {
+                            return IconButton(
+                              icon: Badge(
+                                label: Text('$count'),
+                                child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                              ),
+                              onPressed: () => context.push(AppRoutes.caissierNotifications),
+                            );
+                          }
                           return IconButton(
-                            icon: Badge(
-                              label: Text('$count'),
-                              child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                            ),
-                            onPressed: () => context.push(AppRoutes.notificationHistory),
+                            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                            onPressed: () => context.push(AppRoutes.caissierNotifications),
                           );
-                        }
-                        return IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                          onPressed: () => context.push(AppRoutes.notificationHistory),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: AppTheme.background,
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
-                    hintText: 'Rechercher un ticket, une immatriculation...',
-                    hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 14, fontFamily: 'Inter'),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppTheme.background,
+                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
+                      hintText: 'Rechercher un parking, une zone...',
+                      hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _handleRefresh,
-            color: AppTheme.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 28),
-
-          // ── Section Caisse Active (Derniers Encaissements) ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Ticket Actif',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.secondary.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(10),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: AppTheme.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+  
+            // ── Section Caisse Active (Derniers Encaissements) ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Ticket Actif',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
                       ),
-                      child: Text(
-                        '${_activeParkings.length > 3 ? 3 : _activeParkings.length}',
-                        style: const TextStyle(
-                          color: AppTheme.secondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondary.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${_activeParkings.length > 3 ? 3 : _activeParkings.length}',
+                          style: const TextStyle(
+                            color: AppTheme.secondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Inter',
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      await context.push(AppRoutes.caissierStationnement);
+                      _loadStats();
+                      _loadActiveParkings();
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        color: AppTheme.secondary,
+                        size: 22,
+                      ),
                     ),
-                  ],
-                ),
-                const Icon(
-                  Icons.receipt_rounded,
-                  color: AppTheme.textSecondary,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Liste horizontale scrollable des transactions ──
-          if (_isLoadingParkings)
-            const SizedBox(
-              height: 155,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_activeParkings.isEmpty)
-            const SizedBox(
-              height: 155,
-              child: Center(
-                child: Text('Aucun ticket actif', style: TextStyle(color: Colors.grey)),
-              ),
-            )
-          else
-            SizedBox(
-              height: 155,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _activeParkings.length > 3 ? 3 : _activeParkings.length,
-                itemBuilder: (context, index) {
-                  final tx = _activeParkings[index];
-                  return _buildTransactionCard(tx, index);
-                },
+                  ),
+                ],
               ),
             ),
-
-          const SizedBox(height: 28),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'Services & outils',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
+            const SizedBox(height: 12),
+  
+            // ── Liste horizontale scrollable des transactions ──
+            if (_isLoadingParkings)
+              const SizedBox(
+                height: 155,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_activeParkings.isEmpty)
+              const SizedBox(
+                height: 155,
+                child: Center(
+                  child: Text('Aucun ticket actif', style: TextStyle(color: Colors.grey)),
+                ),
+              )
+            else
+              SizedBox(
+                height: 155,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _activeParkings.length > 3 ? 3 : _activeParkings.length,
+                  itemBuilder: (context, index) {
+                    final tx = _activeParkings[index];
+                    return _buildTransactionCard(tx, index);
+                  },
+                ),
+              ),
+  
+            const SizedBox(height: 28),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Services & outils',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Inter'),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: GridView.count(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                childAspectRatio: 1.45,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: [
+                  _buildToolCard(
+                    icon: Icons.payments_rounded,
+                    title: 'Total Encaissé',
+                    color: const Color(0xFF00E5FF),
+                    infoText: _totalEncaisser,
+                  ),
+                  _buildToolCard(
+                    icon: Icons.receipt_long_rounded,
+                    title: 'Stationnements',
+                    color: const Color(0xFFE040FB),
+                    infoText: _stationnements,
+                  ),
+                  _buildToolCard(
+                    icon: Icons.pending_actions_rounded,
+                    title: 'Encaissé non versé',
+                    color: Colors.amber[600]!,
+                    infoText: _encaisseNonVerse,
+                  ),
+                  _buildToolCard(
+                    icon: Icons.history_edu_rounded,
+                    title: 'Dette',
+                    color: Colors.greenAccent,
+                    infoText: _dette,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 120),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 15),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: GridView.count(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              childAspectRatio: 1.45,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              children: [
-                _buildToolCard(
-                  icon: Icons.payments_rounded,
-                  title: 'Total Encaissé',
-                  color: const Color(0xFF00E5FF),
-                  infoText: _totalEncaisser,
-                ),
-                _buildToolCard(
-                  icon: Icons.receipt_long_rounded,
-                  title: 'Stationnements',
-                  color: const Color(0xFFE040FB),
-                  infoText: _stationnements,
-                ),
-                _buildToolCard(
-                  icon: Icons.pending_actions_rounded,
-                  title: 'Encaissé non versé',
-                  color: Colors.amber[600]!,
-                  infoText: _encaisseNonVerse,
-                ),
-                _buildToolCard(
-                  icon: Icons.history_edu_rounded,
-                  title: 'Dette',
-                  color: Colors.greenAccent,
-                  infoText: _dette,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 120),
-              ],
-            ),
-          ),
-            ),
-          ),
-        ],
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildTransactionCard(ParkingEntry tx, int index) {
     final List<List<Color>> gradients = [
@@ -351,8 +388,10 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
     final gradient = gradients[index % gradients.length];
 
     return GestureDetector(
-      onTap: () {
-        context.push(AppRoutes.caissierStationnementDetail, extra: tx);
+      onTap: () async {
+        await context.push(AppRoutes.caissierStationnementDetail, extra: tx);
+        _loadStats();
+        _loadActiveParkings();
       },
       child: Container(
       width: 250,

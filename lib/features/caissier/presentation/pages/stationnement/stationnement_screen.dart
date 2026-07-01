@@ -18,8 +18,10 @@ class CaissierStationnementScreen extends StatefulWidget {
 
 class _CaissierStationnementScreenState
     extends State<CaissierStationnementScreen> {
-  List<ParkingEntry> _allEntries = [];
-  List<ParkingEntry> _filteredEntries = [];
+  static List<ParkingEntry> _staticCache = [];
+
+  List<ParkingEntry> _allEntries = _staticCache;
+  List<ParkingEntry> _filteredEntries = List.from(_staticCache);
   bool _isLoading = false;
   String? _errorMessage;
   String _search = '';
@@ -45,7 +47,7 @@ class _CaissierStationnementScreenState
   Future<void> _loadStationnements({bool forceRefresh = false}) async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
+      _isLoading = _allEntries.isEmpty;
       _errorMessage = null;
     });
     try {
@@ -54,6 +56,7 @@ class _CaissierStationnementScreenState
       if (mounted) {
         setState(() {
           _allEntries = entries;
+          _staticCache = entries;
           _isLoading = false;
           _applyFilter(_search);
         });
@@ -122,27 +125,37 @@ class _CaissierStationnementScreenState
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stationnements',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter',
+                        if (context.canPop()) ...[
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                                color: Colors.white),
+                            onPressed: () => context.pop(),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Stationnements',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Inter',
+                                ),
                               ),
-                            ),
-                            Text(
-                              'Véhicules actuellement garés',
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 13,
-                                fontFamily: 'Inter',
+                              Text(
+                                'Véhicules actuellement garés',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 13,
+                                  fontFamily: 'Inter',
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(

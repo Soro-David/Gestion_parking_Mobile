@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
+import 'package:parking_mobile/core/theme/app_theme.dart';
 
 /// Écran notifications Agent — redirige vers les pages partagées
 class AgentNotificationsScreen extends StatelessWidget {
@@ -13,21 +14,23 @@ class AgentNotificationsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F1923) : const Color(0xFFF4F6F9),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F1923) : Colors.white,
+        toolbarHeight: 80,
+        backgroundColor: AppTheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: isDark ? Colors.white : const Color(0xFF1A2B47),
+            color: Colors.white,
           ),
           onPressed: () => context.pop(),
         ),
-        title: Text(
+        title: const Text(
           'Notifications',
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1A2B47),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFamily: 'Inter',
           ),
         ),
       ),

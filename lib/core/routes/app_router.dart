@@ -43,6 +43,7 @@ import 'package:parking_mobile/features/caissier/presentation/pages/scan/sortie_
 import 'package:parking_mobile/features/caissier/presentation/pages/scan/stationnement_scan_screen.dart' as caissier_stationnement_scan;
 import 'package:parking_mobile/features/caissier/presentation/pages/profil/edit_profile_screen.dart' as caissier_edit_profile;
 import 'package:parking_mobile/features/caissier/presentation/pages/settings/settings_screen.dart' as caissier_settings;
+import 'package:parking_mobile/features/caissier/presentation/pages/stationnement/stationnement_screen.dart' as caissier_stationnement;
 
 // Shared
 import 'package:parking_mobile/shared/presentation/pages/security_screen.dart';
@@ -248,6 +249,11 @@ class AppRouter {
         builder: (context, state) => caissier_versement_detail.CaissierDetailVersementScreen(
           versementId: state.extra as int,
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.caissierStationnement,
+        name: 'caissierStationnement',
+        builder: (context, state) => const caissier_stationnement.CaissierStationnementScreen(),
       ),
       GoRoute(
         path: AppRoutes.caissierStationnementDetail,

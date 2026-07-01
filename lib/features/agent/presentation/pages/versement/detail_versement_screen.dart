@@ -28,7 +28,7 @@ class _AgentDetailVersementScreenState extends State<AgentDetailVersementScreen>
 			backgroundColor: AppTheme.background,
 			appBar: AppBar(
 				toolbarHeight: 80,
-				backgroundColor: Colors.transparent,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
 				leading: IconButton(
 					icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -44,15 +44,6 @@ class _AgentDetailVersementScreenState extends State<AgentDetailVersementScreen>
 					),
 				),
 				centerTitle: true,
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
-					),
-				),
 			),
 			body: FutureBuilder<VersementDetail>(
 				future: _futureDetail,

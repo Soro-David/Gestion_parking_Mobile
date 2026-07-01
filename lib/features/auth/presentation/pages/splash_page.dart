@@ -4,7 +4,13 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:parking_mobile/core/services/token_service.dart';
+import 'package:parking_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:parking_mobile/shared/services/notification_service.dart';
+import 'package:parking_mobile/core/routes/app_router.dart';
+
 class SplashScreen extends StatefulWidget {
+  static bool isSplashActive = true;
   const SplashScreen({super.key});
 
   @override
@@ -21,6 +27,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    SplashScreen.isSplashActive = true;
 
     // 1. Rotation animation for the car
     _rotationController = AnimationController(
@@ -47,16 +54,65 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // 4. Navigate to Onboarding after 4.5 seconds
+    // 4. Navigate after 4.5 seconds
     Future.delayed(const Duration(milliseconds: 4500), () {
       if (mounted) {
-        context.go(AppRoutes.onboarding);
+        _checkAuthAndNavigate();
       }
     });
   }
 
+  Future<void> _checkAuthAndNavigate() async {
+    try {
+      final token = await TokenService.getToken();
+      if (token != null && token.isNotEmpty) {
+        // Synchroniser le token FCM lié au compte restauré
+        try {
+          await NotificationService.instance.onUserLogin();
+        } catch (e) {
+          debugPrint('FCM token sync failed on auto-login: $e');
+        }
+
+        final profile = await AuthProvider.repository.getProfile();
+        final user = profile['user'];
+        if (user != null && mounted) {
+          SplashScreen.isSplashActive = false;
+          final roleStr = user['role'] as String?;
+          if (roleStr == 'caissier') {
+            context.go(AppRoutes.caissierHome);
+            _checkPendingNotification();
+            return;
+          } else {
+            context.go(AppRoutes.agentHome);
+            _checkPendingNotification();
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Splash auto-login check failed: $e');
+    }
+
+    if (mounted) {
+      SplashScreen.isSplashActive = false;
+      context.go(AppRoutes.onboarding);
+      _checkPendingNotification();
+    }
+  }
+
+  void _checkPendingNotification() {
+    if (NotificationService.pendingNotification != null) {
+      final pending = NotificationService.pendingNotification!;
+      NotificationService.pendingNotification = null;
+      Future.delayed(const Duration(milliseconds: 600), () {
+        AppRouter.router.push(AppRoutes.notificationDetail, extra: pending);
+      });
+    }
+  }
+
   @override
   void dispose() {
+    SplashScreen.isSplashActive = false;
     _rotationController.dispose();
     _fadeController.dispose();
     _pulseController.dispose();

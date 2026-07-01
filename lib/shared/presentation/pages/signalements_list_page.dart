@@ -13,9 +13,11 @@ class SignalementsListPage extends StatefulWidget {
 
 class _SignalementsListPageState extends State<SignalementsListPage> {
   final SignalementRepository _repository = SignalementRepository();
-  List<Signalement> _signalements = [];
-  List<Signalement> _filteredSignalements = [];
-  bool _isLoading = true;
+  static List<Signalement> _staticCache = [];
+
+  List<Signalement> _signalements = _staticCache;
+  List<Signalement> _filteredSignalements = List.from(_staticCache);
+  bool _isLoading = false;
   String _errorMessage = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -34,7 +36,7 @@ class _SignalementsListPageState extends State<SignalementsListPage> {
 
   Future<void> _loadSignalements() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = _signalements.isEmpty;
       _errorMessage = '';
     });
 
@@ -42,6 +44,7 @@ class _SignalementsListPageState extends State<SignalementsListPage> {
       final list = await _repository.getSignalements();
       setState(() {
         _signalements = list;
+        _staticCache = list;
         _filteredSignalements = list;
         _isLoading = false;
       });
@@ -226,12 +229,12 @@ class _SignalementsListPageState extends State<SignalementsListPage> {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -286,7 +289,7 @@ class _SignalementsListPageState extends State<SignalementsListPage> {
                     ),
                     Text(
                       _formatDate(item.createdAt),
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -308,30 +311,30 @@ class _SignalementsListPageState extends State<SignalementsListPage> {
                   item.motif,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF1E293B),
+                    color: Colors.white,
                     fontFamily: 'Inter',
                     height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Divider(color: Color(0xFFF1F5F9)),
+                const Divider(color: Colors.white10),
                 const SizedBox(height: 8),
 
                 // Metadata (Reporting Agent & Parking Name)
                 Row(
                   children: [
-                    const Icon(Icons.person_outline_rounded, color: Color(0xFF64748B), size: 16),
+                    const Icon(Icons.person_outline_rounded, color: AppTheme.textSecondary, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       item.userName ?? 'Agent inconnu',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
                     ),
                     const Spacer(),
-                    const Icon(Icons.local_parking_rounded, color: Color(0xFF64748B), size: 16),
+                    const Icon(Icons.local_parking_rounded, color: AppTheme.textSecondary, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       item.parkingName ?? 'Parking principal',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),

@@ -43,68 +43,61 @@ class _AgentVersementScreenState extends State<AgentVersementScreen> {
 						color: Colors.white,
 					),
 				),
-				centerTitle: true,
-				backgroundColor: Colors.transparent,
+				centerTitle: false,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
-					),
-				),
-				actions: [
-					IconButton(
-						icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-						onPressed: _reload,
-					),
-				],
 			),
-			body: FutureBuilder<List<Versement>>(
-				future: _futureVersements,
-				builder: (context, snapshot) {
-					if (snapshot.connectionState == ConnectionState.waiting) {
-						return const Center(
-							child: CircularProgressIndicator(color: AppTheme.primary),
-						);
-					}
-					if (snapshot.hasError) {
-						return Center(
-							child: Padding(
-								padding: const EdgeInsets.all(24),
-								child: Column(
-									mainAxisSize: MainAxisSize.min,
-									children: [
-										const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
-										const SizedBox(height: 16),
-										Text(
-											'Erreur: ${snapshot.error}',
-											style: const TextStyle(color: Colors.white70),
-											textAlign: TextAlign.center,
+			body: RefreshIndicator(
+				onRefresh: () async => _reload(),
+				color: AppTheme.secondary,
+				backgroundColor: AppTheme.surface,
+				child: FutureBuilder<List<Versement>>(
+					future: _futureVersements,
+					builder: (context, snapshot) {
+						if (snapshot.connectionState == ConnectionState.waiting) {
+							return const Center(
+								child: CircularProgressIndicator(color: AppTheme.primary),
+							);
+						}
+						if (snapshot.hasError) {
+							return CustomScrollView(
+								physics: const AlwaysScrollableScrollPhysics(),
+								slivers: [
+									SliverFillRemaining(
+										hasScrollBody: false,
+										child: Center(
+											child: Padding(
+												padding: const EdgeInsets.all(24),
+												child: Column(
+													mainAxisSize: MainAxisSize.min,
+													children: [
+														const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+														const SizedBox(height: 16),
+														Text(
+															'Erreur: ${snapshot.error}',
+															style: const TextStyle(color: Colors.white70),
+															textAlign: TextAlign.center,
+														),
+														const SizedBox(height: 16),
+														ElevatedButton.icon(
+															onPressed: _reload,
+															icon: const Icon(Icons.refresh_rounded),
+															label: const Text('Réessayer'),
+															style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+														),
+													],
+												),
+											),
 										),
-										const SizedBox(height: 16),
-										ElevatedButton.icon(
-											onPressed: _reload,
-											icon: const Icon(Icons.refresh_rounded),
-											label: const Text('Réessayer'),
-											style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-										),
-									],
-								),
-							),
-						);
-					}
+									),
+								],
+							);
+						}
 
-					final versements = snapshot.data ?? [];
+						final versements = snapshot.data ?? [];
 
-					if (versements.isEmpty) {
-						return RefreshIndicator(
-							onRefresh: () async => _reload(),
-							color: AppTheme.secondary,
-							backgroundColor: AppTheme.surface,
-							child: CustomScrollView(
+						if (versements.isEmpty) {
+							return CustomScrollView(
 								physics: const AlwaysScrollableScrollPhysics(),
 								slivers: [
 									SliverFillRemaining(
@@ -152,19 +145,20 @@ class _AgentVersementScreenState extends State<AgentVersementScreen> {
 										),
 									),
 								],
-							),
-						);
-					}
+							);
+						}
 
-					return ListView.builder(
-						padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-						itemCount: versements.length,
-						itemBuilder: (context, index) {
-							final v = versements[index];
-							return _buildVersementItem(context, v);
-						},
-					);
-				},
+						return ListView.builder(
+							physics: const AlwaysScrollableScrollPhysics(),
+							padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+							itemCount: versements.length,
+							itemBuilder: (context, index) {
+								final v = versements[index];
+								return _buildVersementItem(context, v);
+							},
+						);
+					},
+				),
 			),
 		);
 	}

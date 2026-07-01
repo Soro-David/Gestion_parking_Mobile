@@ -14,18 +14,17 @@ class AgentHistoryScreen extends StatelessWidget {
 			child: Scaffold(
 				backgroundColor: AppTheme.background,
 				appBar: AppBar(
-					backgroundColor: Colors.transparent,
+					backgroundColor: AppTheme.surface,
 					elevation: 0,
-					flexibleSpace: Container(
-						decoration: const BoxDecoration(
-							gradient: LinearGradient(
-								colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-								begin: Alignment.topLeft,
-								end: Alignment.bottomRight,
-							),
+					title: const Text(
+						'Historique',
+						style: TextStyle(
+							fontFamily: 'Inter',
+							color: Colors.white,
+							fontSize: 22,
+							fontWeight: FontWeight.bold,
 						),
 					),
-					title: const Text('Historique', style: TextStyle(fontFamily: 'Inter')),
 					bottom: const TabBar(
 						indicatorColor: AppTheme.secondary,
 						labelColor: Colors.white,

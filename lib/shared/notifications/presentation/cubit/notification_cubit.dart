@@ -31,9 +31,11 @@ class NotificationCubit extends Cubit<NotificationState> {
     return super.close();
   }
 
-  /// Charge l'historique des notifications et les catégories
   Future<void> loadNotifications() async {
-    emit(const NotificationLoading());
+    final current = state;
+    if (current is! NotificationLoaded) {
+      emit(const NotificationLoading());
+    }
     try {
       final notifications = await _repository.getNotificationHistory();
       final categories = await _repository.getCategories();
@@ -45,7 +47,9 @@ class NotificationCubit extends Cubit<NotificationState> {
         unreadCount: unreadCount,
       ));
     } catch (e) {
-      emit(NotificationError(e.toString()));
+      if (current is! NotificationLoaded) {
+        emit(NotificationError(e.toString()));
+      }
     }
   }
 

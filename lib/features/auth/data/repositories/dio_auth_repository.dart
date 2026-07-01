@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parking_mobile/shared/domain/entities/user.dart';
 import 'package:parking_mobile/shared/services/notification_service.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -25,6 +28,11 @@ class DioAuthRepository implements AuthRepository {
   Future<void> logout() async {
     // ✓ Supprimer le token FCM avant la déconnexion
     await NotificationService.instance.onUserLogout();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_profile');
+    } catch (_) {}
+    _cachedProfile = null;
     await _remoteDataSource.logout();
   }
 
@@ -34,9 +42,43 @@ class DioAuthRepository implements AuthRepository {
     if (!forceRefresh && _cachedProfile != null) {
       return _cachedProfile!;
     }
+
+    if (!forceRefresh) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final savedProfile = prefs.getString('cached_profile');
+        if (savedProfile != null) {
+          _cachedProfile = jsonDecode(savedProfile) as Map<String, dynamic>;
+          // Start background refresh without awaiting
+          _refreshProfileInBackground();
+          return _cachedProfile!;
+        }
+      } catch (e) {
+        debugPrint('Error loading cached profile: $e');
+      }
+    }
+
+    return _fetchAndCacheProfile();
+  }
+
+  Future<Map<String, dynamic>> _fetchAndCacheProfile() async {
     final profile = await _remoteDataSource.getProfile();
     _cachedProfile = profile;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_profile', jsonEncode(profile));
+    } catch (e) {
+      debugPrint('Error caching profile: $e');
+    }
     return profile;
+  }
+
+  Future<void> _refreshProfileInBackground() async {
+    try {
+      await _fetchAndCacheProfile();
+    } catch (e) {
+      debugPrint('Background profile refresh failed: $e');
+    }
   }
 
   @override

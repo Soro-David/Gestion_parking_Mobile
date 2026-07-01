@@ -2,12 +2,14 @@
 // Ce service gère : init Firebase, permissions, foreground/background,
 // token management (save + refresh), et la navigation par data payload.
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Color;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:parking_mobile/shared/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:parking_mobile/shared/notifications/domain/entities/app_notification.dart';
 
@@ -25,6 +27,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   NotificationService._internal();
   static final NotificationService instance = NotificationService._internal();
+  static AppNotification? pendingNotification;
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
@@ -34,12 +37,12 @@ class NotificationService {
   /// Doit être injecté depuis main.dart (GoRouter n'est pas accessible ici)
   Function(String route, Map<String, dynamic>? data)? onNotificationTapped;
 
-  // Canal Android pour les notifications foreground
+  // Canal Android pour les notifications foreground et background avec haute priorité et son
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'parking_high_importance',
-    'Parking Notifications',
+    'parking_high_importance_v3',
+    'Notifications du Parking',
     description: 'Notifications importantes du parking',
-    importance: Importance.high,
+    importance: Importance.max,
     playSound: true,
   );
 
@@ -159,6 +162,14 @@ class NotificationService {
       debugPrint('[FCM] Erreur lors de l\'ajout de la notification en temps réel: $e');
     }
 
+    final payloadMap = {
+      'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      'title': notification.title ?? '',
+      'body': notification.body ?? '',
+      'type': type ?? '',
+      'data': message.data,
+    };
+
     await _localNotifications.show(
       id: notification.hashCode,
       title: notification.title,
@@ -179,53 +190,32 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      payload: _buildPayload(message.data),
+      payload: jsonEncode(payloadMap),
     );
   }
 
   /// Gère le tap sur une notification (app en background ou terminée)
   void _handleNotificationTap(RemoteMessage message) {
     debugPrint('[FCM] Notification tappée: ${message.data}');
-    final payload = _buildPayload(message.data);
-    if (payload.isNotEmpty) {
-      _navigateFromPayload(payload);
-    }
-  }
-
-  /// Construit une string payload depuis les data du message
-  String _buildPayload(Map<String, dynamic> data) {
-    if (data.isEmpty) return '';
-    final type = data['type'] ?? '';
-    final id = data['id'] ?? '';
-    return '$type:$id';
+    final payloadMap = {
+      'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      'title': message.notification?.title ?? '',
+      'body': message.notification?.body ?? '',
+      'type': message.data['type'] ?? '',
+      'data': message.data,
+    };
+    _navigateFromPayload(jsonEncode(payloadMap));
   }
 
   /// Navigue vers le bon écran selon le type de notification
-  void _navigateFromPayload(String payload) {
-    final parts = payload.split(':');
-    final type = parts.isNotEmpty ? parts[0] : '';
-    final id = parts.length > 1 ? parts[1] : '';
-
-    final data = {'type': type, 'id': id};
-
-    // Mapper le type vers la route go_router
-    String route = '/notifications/history';
-    switch (type) {
-      case 'entree':
-        route = '/notifications/history';
-        break;
-      case 'sortie':
-        route = '/notifications/history';
-        break;
-      case 'versement':
-        route = '/notifications/history';
-        break;
-      case 'paiement':
-        route = '/notifications/history';
-        break;
+  void _navigateFromPayload(String payloadString) {
+    try {
+      final decoded = jsonDecode(payloadString) as Map<String, dynamic>;
+      onNotificationTapped?.call(AppRoutes.notificationDetail, decoded);
+    } catch (e) {
+      debugPrint('[FCM] Erreur lors du parsing du payload de notification: $e');
+      onNotificationTapped?.call('/notifications/history', null);
     }
-
-    onNotificationTapped?.call(route, data);
   }
 
   /// Vérifie si une catégorie de notification est activée

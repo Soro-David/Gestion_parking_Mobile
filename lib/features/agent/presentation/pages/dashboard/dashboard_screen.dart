@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/core/routes/route_names.dart';
@@ -28,12 +29,26 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 	List<ParkingEntry> _activeParkings = [];
 	bool _isLoadingParkings = true;
 
+	Timer? _refreshTimer;
+
 	@override
 	void initState() {
 		super.initState();
 		_loadProfile();
 		_loadStats();
 		_loadActiveParkings();
+		_refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+			if (mounted) {
+				_loadStats();
+				_loadActiveParkings();
+			}
+		});
+	}
+
+	@override
+	void dispose() {
+		_refreshTimer?.cancel();
+		super.dispose();
 	}
 
 	Future<void> _loadStats() async {
@@ -113,9 +128,16 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 
 	@override
 	Widget build(BuildContext context) {
-		return Column(
-			children: [
-				// ── Header avec avatar + recherche ──
+		return BlocListener<NotificationCubit, NotificationState>(
+			listener: (context, state) {
+				if (state is NotificationLoaded) {
+					_loadStats();
+					_loadActiveParkings();
+				}
+			},
+			child: Column(
+				children: [
+					// ── Header avec avatar + recherche ──
 					Container(
 						padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
 						decoration: const BoxDecoration(
@@ -247,8 +269,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 									],
 								),
 								GestureDetector(
-									onTap: () {
-										context.push(AppRoutes.agentParking);
+									onTap: () async {
+										await context.push(AppRoutes.agentStationnementsEnCours);
+										_loadStats();
+										_loadActiveParkings();
 									},
 									child: Container(
 										width: 36,
@@ -272,19 +296,19 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 					// ── Liste horizontale scrollable des tickets actifs ──
 					if (_isLoadingParkings)
 						const SizedBox(
-							height: 150,
+							height: 155,
 							child: Center(child: CircularProgressIndicator()),
 						)
 					else if (_activeParkings.isEmpty)
 						const SizedBox(
-							height: 150,
+							height: 155,
 							child: Center(
 								child: Text('Aucun ticket actif', style: TextStyle(color: Colors.grey)),
 							),
 						)
 					else
 						SizedBox(
-							height: 150,
+							height: 155,
 							child: ListView.builder(
 								scrollDirection: Axis.horizontal,
 								padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -347,6 +371,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 						),
 					),
 				],
+			),
 		);
 	}
 
@@ -360,8 +385,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 		final gradient = gradients[index % gradients.length];
 
 		return GestureDetector(
-			onTap: () {
-				context.push(AppRoutes.agentStationnementDetail, extra: ticket);
+			onTap: () async {
+				await context.push(AppRoutes.agentStationnementDetail, extra: ticket);
+				_loadStats();
+				_loadActiveParkings();
 			},
 			child: Container(
 			width: 260,

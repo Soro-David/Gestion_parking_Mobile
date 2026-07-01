@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
+import 'package:parking_mobile/shared/widgets/signalement_bottom_sheet.dart';
 
 class AgentEntreeDetailScreen extends StatelessWidget {
   final ParkingEntry entry;
@@ -285,17 +286,14 @@ class AgentEntreeDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-                              SizedBox(width: 10),
-                              Text('Signalement enregistré.'),
-                            ],
-                          ),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
+                      showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (ctx) => SignalementBottomSheet(
+                          licensePlate: entry.licensePlate,
+                          parkingId: entry.parkingId ?? 1,
+                          parentContext: context,
                         ),
                       );
                     },

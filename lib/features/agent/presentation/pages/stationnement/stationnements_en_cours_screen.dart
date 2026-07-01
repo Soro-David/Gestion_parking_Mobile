@@ -18,11 +18,14 @@ class AgentStationnementEnCoursScreen extends StatefulWidget {
 
 class _AgentStationnementEnCoursScreenState
     extends State<AgentStationnementEnCoursScreen> {
-  List<ParkingEntry> _allRecords = [];
-  List<ParkingEntry> _filteredRecords = [];
+  static List<ParkingEntry> _staticCache = [];
+
+  List<ParkingEntry> _allRecords = _staticCache;
+  List<ParkingEntry> _filteredRecords = List.from(_staticCache);
   String _searchQuery = '';
   bool _isLoading = false;
   String? _errorMessage;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,10 +33,16 @@ class _AgentStationnementEnCoursScreenState
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
+      _isLoading = _allRecords.isEmpty;
       _errorMessage = null;
     });
 
@@ -43,6 +52,7 @@ class _AgentStationnementEnCoursScreenState
       if (mounted) {
         setState(() {
           _allRecords = records;
+          _staticCache = records;
           _isLoading = false;
           _filter(_searchQuery);
         });
@@ -85,62 +95,128 @@ class _AgentStationnementEnCoursScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        toolbarHeight: 80,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Stationnements en cours',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: AppTheme.surface,
-        elevation: 0,
-      ),
       body: Column(
         children: [
-          // ── Barre de recherche ──────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            child: TextField(
-              onChanged: _filter,
-              style: const TextStyle(color: Colors.black87, fontFamily: 'Inter'),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.search_rounded,
-                    color: Colors.black54),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear_rounded,
-                            color: Colors.black54),
-                        onPressed: () {
-                          _filter('');
-                          FocusScope.of(context).unfocus();
-                        },
-                      )
-                    : null,
-                hintText: 'Rechercher par immatriculation...',
-                hintStyle: const TextStyle(
-                    color: Colors.black38,
-                    fontSize: 14,
-                    fontFamily: 'Inter'),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+          // ── Header bleu foncé ───────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              color: AppTheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x40143F85),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide:
-                      const BorderSide(color: AppTheme.secondary, width: 1.5),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Titre + compteur
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (context.canPop()) ...[
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                            onPressed: () => context.pop(),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Stationnements',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                              Text(
+                                'Véhicules actuellement garés',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 13,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.directions_car_rounded,
+                                  color: Colors.white, size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${_allRecords.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Barre de recherche
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(
+                            color: Colors.black87, fontFamily: 'Inter'),
+                        decoration: InputDecoration(
+                          hintText: 'Rechercher par immatriculation...',
+                          hintStyle: const TextStyle(
+                              color: Colors.black38,
+                              fontFamily: 'Inter',
+                              fontSize: 14),
+                          prefixIcon: const Icon(Icons.search_rounded,
+                              color: Colors.black54),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear_rounded,
+                                      color: Colors.black54),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _filter('');
+                                    FocusScope.of(context).unfocus();
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                        ),
+                        onChanged: _filter,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

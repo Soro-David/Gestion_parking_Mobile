@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_entry.dart';
 import 'package:parking_mobile/shared/domain/entities/parking_exit.dart';
@@ -31,7 +33,7 @@ class CaissierHistoryScreen extends StatelessWidget {
           title: const Padding(
             padding: EdgeInsets.only(top: 16),
             child: Text(
-              'Historique Caissier',
+              'Historique',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 22,
@@ -40,7 +42,7 @@ class CaissierHistoryScreen extends StatelessWidget {
               ),
             ),
           ),
-          centerTitle: true,
+          centerTitle: false,
           bottom: const TabBar(
             indicatorColor: AppTheme.secondary,
             indicatorWeight: 3,
@@ -257,26 +259,31 @@ class _CaissierHistoriqueEntreeScreenState extends State<CaissierHistoriqueEntre
         itemCount: list.length,
         itemBuilder: (context, index) {
           final e = list[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
-                Text(_formatDateTime(e.entryTime), style: const TextStyle(color: Colors.white70)),
-              ],
+          return GestureDetector(
+            onTap: () {
+              context.push(AppRoutes.caissierEntreeDetail, extra: e);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                  Text(_formatDateTime(e.entryTime), style: const TextStyle(color: Colors.white70)),
+                ],
+              ),
             ),
           );
         },
@@ -469,40 +476,45 @@ class _CaissierHistoriqueSortieScreenState extends State<CaissierHistoriqueSorti
         itemCount: list.length,
         itemBuilder: (context, index) {
           final e = list[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(_formatDateTime(e.exitTime), style: const TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${e.amount.toStringAsFixed(0)} FCFA',
-                      style: const TextStyle(
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Inter',
+          return GestureDetector(
+            onTap: () {
+              context.push(AppRoutes.caissierSortieDetail, extra: e);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(e.licensePlate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(e.vehicleType, style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(_formatDateTime(e.exitTime), style: const TextStyle(color: Colors.white70)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${e.amount.toStringAsFixed(0)} FCFA',
+                        style: const TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Inter',
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },

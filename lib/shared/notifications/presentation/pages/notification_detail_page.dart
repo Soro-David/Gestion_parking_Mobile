@@ -165,9 +165,9 @@ class NotificationDetailPage extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                       ),
                       child: const Center(
                         child: CircularProgressIndicator(color: AppTheme.primary),
@@ -203,16 +203,16 @@ class NotificationDetailPage extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
                         ],
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +224,7 @@ class NotificationDetailPage extends StatelessWidget {
                               Text(
                                 'DÉTAILS DU VÉHICULE SIGNALÉ',
                                 style: TextStyle(
-                                  color: Color(0xFF0F172A),
+                                  color: Colors.white,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Inter',
@@ -316,7 +316,7 @@ class NotificationDetailPage extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: const Color(0xFF1E293B),
+              color: Colors.white,
               fontSize: 14,
               fontWeight: isMultiLine ? FontWeight.normal : FontWeight.w600,
               fontFamily: 'Inter',
@@ -324,7 +324,7 @@ class NotificationDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Divider(color: Color(0xFFF1F5F9)),
+          const Divider(color: Colors.white10),
         ],
       ),
     );

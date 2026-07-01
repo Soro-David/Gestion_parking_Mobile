@@ -85,7 +85,7 @@ class _AgentScanScreenState extends State<AgentScanScreen> with SingleTickerProv
 			backgroundColor: Colors.black,
 			appBar: AppBar(
 				toolbarHeight: 70,
-				backgroundColor: Colors.transparent,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
 				leading: IconButton(
 					icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
@@ -99,15 +99,6 @@ class _AgentScanScreenState extends State<AgentScanScreen> with SingleTickerProv
 						fontFamily: 'Inter',
 						fontSize: 22,
 						fontWeight: FontWeight.bold,
-					),
-				),
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
 					),
 				),
 				bottom: TabBar(

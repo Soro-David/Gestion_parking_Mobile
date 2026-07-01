@@ -96,17 +96,8 @@ class _AgentProfilScreenState extends State<AgentProfilScreen> {
 					style: TextStyle(fontFamily: 'Inter', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
 				),
 				centerTitle: true,
-				backgroundColor: Colors.transparent,
+				backgroundColor: AppTheme.surface,
 				elevation: 0,
-				flexibleSpace: Container(
-					decoration: const BoxDecoration(
-						gradient: LinearGradient(
-							colors: [Color(0xFF1E1E2C), Color(0xFF232539)],
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
-					),
-				),
 			),
 			body: _isLoading
 					? const Center(
