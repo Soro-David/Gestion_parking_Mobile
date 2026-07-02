@@ -2,7 +2,7 @@ import 'package:camera/camera.dart';
 import '../../../../shared/domain/entities/parking_entry.dart';
 
 abstract class AgentStationnementRepository {
-  Future<List<ParkingEntry>> getStationnementsEnCours();
+  Future<List<ParkingEntry>> getStationnementsEnCours({bool forceRefresh = false});
 
   Future<String?> extractLicensePlate(XFile imageFile);
 

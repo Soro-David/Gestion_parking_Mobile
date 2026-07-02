@@ -11,12 +11,14 @@ class NotificationCubit extends Cubit<NotificationState> {
         super(const NotificationInitial()) {
     _subscription = _repository.realtimeStream.listen((notifications) {
       final current = state;
+      // Mise à jour immédiate en mémoire pour affichage instantané du badge
       if (current is NotificationLoaded) {
         emit(current.copyWith(
           notifications: notifications,
           unreadCount: notifications.where((n) => !n.isRead).length,
         ));
       }
+      // Re-synchronisation serveur pour garantir la cohérence du compteur
     });
     // Load initial notifications and categories
     loadNotifications();

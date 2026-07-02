@@ -38,10 +38,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
   final NotificationRemoteDataSource _dataSource;
 
   // Internal list storing current notifications
-  final List<AppNotification> _notifications = [];
+  // STATIC — partagée entre toutes les instances (singleton ou non)
+  static final List<AppNotification> _notifications = [];
 
   // Broadcast stream controller for real‑time updates
-  final StreamController<List<AppNotification>> _controller =
+  // STATIC — partagé entre toutes les instances pour que tout abonné (NotificationCubit)
+  // reçoive les événements émis par NotificationService (foreground FCM handler).
+  static final StreamController<List<AppNotification>> _controller =
       StreamController<List<AppNotification>>.broadcast();
 
   static const String _prefixCategory = 'notif_category_';

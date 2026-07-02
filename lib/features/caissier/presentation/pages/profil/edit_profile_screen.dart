@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:parking_mobile/core/theme/app_theme.dart';
 import 'package:parking_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:parking_mobile/shared/domain/entities/user.dart';
+import 'package:parking_mobile/shared/services/avatar_cache_helper.dart';
 
 class CaissierEditProfileScreen extends StatefulWidget {
   const CaissierEditProfileScreen({super.key});
@@ -34,6 +35,10 @@ class _CaissierEditProfileScreenState extends State<CaissierEditProfileScreen> {
   @override
   void initState() {
     super.initState();
+    final cachedProvider = AvatarCacheHelper.getLocalAvatarProvider();
+    if (cachedProvider != null) {
+      _avatarUrl = 'cached';
+    }
     _loadProfile();
   }
 
@@ -48,6 +53,8 @@ class _CaissierEditProfileScreenState extends State<CaissierEditProfileScreen> {
         _phoneController.text = user['phone'] ?? '';
         _adresseController.text = user['address'] ?? user['adresse'] ?? '';
         _avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+
+        await AvatarCacheHelper.cacheAvatarIfNeeded(_avatarUrl);
 
         _headerName = '${user['first_name'] ?? ''} ${user['name'] ?? ''}'
             .trim();
@@ -159,7 +166,7 @@ class _CaissierEditProfileScreenState extends State<CaissierEditProfileScreen> {
               InteractiveViewer(
                 child: _imageFile != null
                     ? Image.file(_imageFile!, fit: BoxFit.contain)
-                    : Image.network(_avatarUrl!, fit: BoxFit.contain),
+                    : Image(image: AvatarCacheHelper.getAvatarImageProvider(_avatarUrl), fit: BoxFit.contain),
               ),
               Positioned(
                 top: 0,
@@ -320,17 +327,16 @@ class _CaissierEditProfileScreenState extends State<CaissierEditProfileScreen> {
                                               fit: BoxFit.cover,
                                             )
                                           : (_avatarUrl != null &&
-                                                _avatarUrl!.isNotEmpty)
+                                                _avatarUrl!.isNotEmpty) || AvatarCacheHelper.getLocalAvatarProvider() != null
                                           ? DecorationImage(
-                                              image: NetworkImage(_avatarUrl!),
+                                              image: AvatarCacheHelper.getAvatarImageProvider(_avatarUrl),
                                               fit: BoxFit.cover,
                                             )
                                           : null,
                                     ),
-                                    child:
-                                        (_imageFile == null &&
+                                    child: (_imageFile == null &&
                                             (_avatarUrl == null ||
-                                                _avatarUrl!.isEmpty))
+                                                _avatarUrl!.isEmpty) && AvatarCacheHelper.getLocalAvatarProvider() == null)
                                         ? const Icon(
                                             Icons.person_rounded,
                                             color: Colors.white,

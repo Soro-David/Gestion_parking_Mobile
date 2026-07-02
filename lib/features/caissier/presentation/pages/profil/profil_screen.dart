@@ -6,6 +6,7 @@ import 'package:parking_mobile/core/routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:parking_mobile/core/constants/api_constants.dart';
+import 'package:parking_mobile/shared/services/avatar_cache_helper.dart';
 
 class CaissierProfilScreen extends StatefulWidget {
   const CaissierProfilScreen({super.key});
@@ -24,6 +25,10 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
   @override
   void initState() {
     super.initState();
+    final cachedProvider = AvatarCacheHelper.getLocalAvatarProvider();
+    if (cachedProvider != null) {
+      _avatarUrl = 'cached';
+    }
     _loadProfile();
   }
 
@@ -41,6 +46,8 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
         final roleStr = user['role'] ?? 'caissier';
         _role = roleStr == 'caissier' ? 'Caissier de Service' : 'Agent de Service';
         _avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+
+        await AvatarCacheHelper.cacheAvatarIfNeeded(_avatarUrl);
       }
       setState(() {
         _isLoading = false;
@@ -201,14 +208,14 @@ class _CaissierProfilScreenState extends State<CaissierProfilScreen> {
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
-                                  image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                                  image: (_avatarUrl != null && _avatarUrl!.isNotEmpty) || AvatarCacheHelper.getLocalAvatarProvider() != null
                                       ? DecorationImage(
-                                          image: NetworkImage(_avatarUrl!),
+                                          image: AvatarCacheHelper.getAvatarImageProvider(_avatarUrl),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
-                                child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+                                child: (_avatarUrl == null || _avatarUrl!.isEmpty) && AvatarCacheHelper.getLocalAvatarProvider() == null
                                     ? const Icon(
                                         Icons.person_rounded,
                                         color: Colors.white,

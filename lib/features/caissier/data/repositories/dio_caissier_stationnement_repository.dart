@@ -14,7 +14,7 @@ class DioCaissierStationnementRepository implements CaissierStationnementReposit
     CacheManager<List<ParkingEntry>>? cacheManager,
   })  : _remoteDataSource = remoteDataSource ?? DioCaissierStationnementRemoteDataSource(),
         _localDataSource = localDataSource ?? CaissierStationnementLocalDataSourceImpl(),
-        _cacheManager = cacheManager ?? CacheManager<List<ParkingEntry>>(ttl: const Duration(minutes: 5));
+        _cacheManager = cacheManager ?? CacheManager<List<ParkingEntry>>(ttl: const Duration(seconds: 15));
 
   final CaissierStationnementRemoteDataSource _remoteDataSource;
   final CaissierStationnementLocalDataSource _localDataSource;

@@ -11,6 +11,7 @@ import 'package:parking_mobile/features/caissier/presentation/providers/caissier
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parking_mobile/shared/notifications/presentation/cubit/notification_cubit.dart';
 import 'package:parking_mobile/shared/notifications/presentation/cubit/notification_state.dart';
+import 'package:parking_mobile/shared/services/avatar_cache_helper.dart';
 
 class CaissierDashboardScreen extends StatefulWidget {
   const CaissierDashboardScreen({super.key});
@@ -34,13 +35,18 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // Tenter de charger l'avatar synchrone depuis le cache local immédiatement
+    final cachedProvider = AvatarCacheHelper.getLocalAvatarProvider();
+    if (cachedProvider != null) {
+      _avatarUrl = 'cached';
+    }
     _loadProfile();
     _loadStats();
     _loadActiveParkings();
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
-        _loadStats();
-        _loadActiveParkings();
+        _loadStats(forceRefresh: true);
+        _loadActiveParkings(silent: true, forceRefresh: true);
       }
     });
   }
@@ -51,17 +57,26 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _loadStats() async {
+  Future<void> _loadStats({bool forceRefresh = false}) async {
     try {
-      final stats = await CaissierStatProvider.repository.getStats();
+      final stats = await CaissierStatProvider.repository.getStats(forceRefresh: forceRefresh);
+      final newTotal = '${stats.totalEncaisser.toStringAsFixed(0)} FCFA';
+      final newStationnements = '${stats.stationnements}';
+      final newEncaisse = '${stats.encaisseNonVerse.toStringAsFixed(0)} FCFA';
+      final newDette = '${stats.dette.toStringAsFixed(0)} FCFA';
 
       if (mounted) {
-        setState(() {
-          _totalEncaisser = '${stats.totalEncaisser.toStringAsFixed(0)} FCFA';
-          _stationnements = '${stats.stationnements}';
-          _encaisseNonVerse = '${stats.encaisseNonVerse.toStringAsFixed(0)} FCFA';
-          _dette = '${stats.dette.toStringAsFixed(0)} FCFA';
-        });
+        if (_totalEncaisser != newTotal ||
+            _stationnements != newStationnements ||
+            _encaisseNonVerse != newEncaisse ||
+            _dette != newDette) {
+          setState(() {
+            _totalEncaisser = newTotal;
+            _stationnements = newStationnements;
+            _encaisseNonVerse = newEncaisse;
+            _dette = newDette;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading stats: $e');
@@ -73,15 +88,20 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
       final profileData = await AuthProvider.repository.getProfile();
       final user = profileData['user'] as Map<String, dynamic>?;
       if (user != null && mounted) {
-        setState(() {
-          final firstName = user['first_name'] ?? '';
-          final lastName = user['name'] ?? '';
-          _userName = '$firstName $lastName'.trim();
-          if (_userName.isEmpty) {
-            _userName = user['name'] ?? 'Caissier';
-          }
-          _avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
-        });
+        final firstName = user['first_name'] ?? '';
+        final lastName = user['name'] ?? '';
+        final userName = '$firstName $lastName'.trim();
+        final sanitizedName = userName.isNotEmpty ? userName : (user['name'] ?? 'Caissier');
+        final avatarUrl = User.sanitizeAvatarUrl(user['avatar_url'] as String?);
+
+        await AvatarCacheHelper.cacheAvatarIfNeeded(avatarUrl);
+
+        if (mounted) {
+          setState(() {
+            _userName = sanitizedName;
+            _avatarUrl = avatarUrl;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading profile: $e');
@@ -95,17 +115,31 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
     return (hours * rate).round();
   }
 
-  Future<void> _loadActiveParkings() async {
-    setState(() {
-      _isLoadingParkings = true;
-    });
+  Future<void> _loadActiveParkings({bool silent = false, bool forceRefresh = false}) async {
+    if (_activeParkings.isEmpty && !silent) {
+      setState(() {
+        _isLoadingParkings = true;
+      });
+    }
     try {
-      final parkings = await CaissierStationnementProvider.repository.getStationnementsEnCours();
+      final parkings = await CaissierStationnementProvider.repository.getStationnementsEnCours(forceRefresh: forceRefresh);
       if (mounted) {
-        setState(() {
-          _activeParkings = parkings;
-          _isLoadingParkings = false;
-        });
+        bool hasChanged = _activeParkings.length != parkings.length;
+        if (!hasChanged) {
+          for (int i = 0; i < parkings.length; i++) {
+            if (_activeParkings[i].id != parkings[i].id || 
+                _activeParkings[i].status != parkings[i].status) {
+              hasChanged = true;
+              break;
+            }
+          }
+        }
+        if (hasChanged || _isLoadingParkings) {
+          setState(() {
+            _activeParkings = parkings;
+            _isLoadingParkings = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading active parkings: $e');
@@ -120,8 +154,8 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
   Future<void> _handleRefresh() async {
     await Future.wait([
       _loadProfile(),
-      _loadStats(),
-      _loadActiveParkings(),
+      _loadStats(forceRefresh: true),
+      _loadActiveParkings(forceRefresh: true),
     ]);
   }
 
@@ -131,8 +165,8 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
     return BlocListener<NotificationCubit, NotificationState>(
       listener: (context, state) {
         if (state is NotificationLoaded) {
-          _loadStats();
-          _loadActiveParkings();
+          _loadStats(forceRefresh: true);
+          _loadActiveParkings(silent: true, forceRefresh: true);
         }
       },
       child: Column(
@@ -166,14 +200,14 @@ class _CaissierDashboardScreenState extends State<CaissierDashboardScreen> {
                                 gradient: AppTheme.primaryGradient,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white24, width: 1.5),
-                                image: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                                image: (_avatarUrl != null && _avatarUrl!.isNotEmpty) || AvatarCacheHelper.getLocalAvatarProvider() != null
                                     ? DecorationImage(
-                                        image: NetworkImage(_avatarUrl!),
+                                        image: AvatarCacheHelper.getAvatarImageProvider(_avatarUrl),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
-                              child: (_avatarUrl == null || _avatarUrl!.isEmpty)
+                              child: (_avatarUrl == null || _avatarUrl!.isEmpty) && AvatarCacheHelper.getLocalAvatarProvider() == null
                                   ? const Center(
                                       child: Icon(Icons.person_rounded, color: Colors.white, size: 28),
                                     )

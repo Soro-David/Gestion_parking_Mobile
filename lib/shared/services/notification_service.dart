@@ -24,6 +24,15 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('[FCM Background] ${message.notification?.title}');
 }
 
+/// Handler isolé pour le tap sur une notification locale en background
+/// DOIT être une fonction top-level
+@pragma('vm:entry-point')
+void _onBackgroundLocalNotificationTap(NotificationResponse details) {
+  // En background, on ne peut pas naviguer directement ici.
+  // La navigation sera déclenchée au prochain démarrage via onDidReceiveNotificationResponse.
+  debugPrint('[LocalNotif Background Tap] payload: ${details.payload}');
+}
+
 class NotificationService {
   NotificationService._internal();
   static final NotificationService instance = NotificationService._internal();
@@ -108,19 +117,23 @@ class NotificationService {
     await _localNotifications.initialize(
       settings: initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // L'utilisateur a tapé une notification locale
-        if (response.payload != null) {
+        // Tap depuis l'état foreground ou background → navigation vers le détail
+        debugPrint('[LocalNotif] Tap reçu, payload: ${response.payload}');
+        if (response.payload != null && response.payload!.isNotEmpty) {
           _navigateFromPayload(response.payload!);
         }
       },
+      onDidReceiveBackgroundNotificationResponse: _onBackgroundLocalNotificationTap,
     );
 
     // Créer le canal Android haute priorité
     if (Platform.isAndroid) {
-      await _localNotifications
+      final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(_channel);
+              AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.createNotificationChannel(_channel);
+      // Demander explicitement la permission d'afficher des notifications (requis sur Android 13+)
+      await androidPlugin?.requestNotificationsPermission();
     }
 
     // Forcer l'affichage des notifications en foreground sur iOS
@@ -133,25 +146,43 @@ class NotificationService {
 
   /// Affiche une notification locale quand un message arrive en foreground
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('[FCM Foreground] ${message.notification?.title}');
-
-    final notification = message.notification;
-    if (notification == null) return;
+    final type = message.data['type'] as String?;
 
     // Vérifier si la catégorie est activée
-    final type = message.data['type'] as String?;
     if (type != null && !await _isCategoryEnabled(type)) {
-      debugPrint('[FCM] Catégorie $type désactivée, notification ignorée');
+      debugPrint('[FCM Foreground] Catégorie $type désactivée, notification ignorée');
       return;
     }
 
-    // Ajouter aux notifications en temps réel localement
+    // Récupérer titre/corps depuis message.notification OU depuis message.data
+    // (certains serveurs envoient des messages "data-only" sans objet notification)
+    final title = message.notification?.title
+        ?? message.data['title'] as String?
+        ?? 'Nouvelle notification';
+    final body = message.notification?.body
+        ?? message.data['body'] as String?
+        ?? '';
+
+    debugPrint('[FCM Foreground] Affichage bannière: $title');
+
+    // Construire le payload complet pour la navigation au tap
+    final notifId = message.messageId
+        ?? DateTime.now().millisecondsSinceEpoch.toString();
+    final payloadMap = {
+      'id': notifId,
+      'title': title,
+      'body': body,
+      'type': type ?? '',
+      'data': message.data,
+    };
+
+    // Ajouter dans le stream temps réel → badge de cloche
     try {
       final repo = NotificationRepositoryImpl();
       final appNotification = AppNotification(
-        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        title: notification.title ?? '',
-        body: notification.body ?? '',
+        id: notifId,
+        title: title,
+        body: body,
         type: type,
         data: message.data,
         createdAt: DateTime.now(),
@@ -159,30 +190,24 @@ class NotificationService {
       );
       await repo.addRealtimeNotification(appNotification);
     } catch (e) {
-      debugPrint('[FCM] Erreur lors de l\'ajout de la notification en temps réel: $e');
+      debugPrint('[FCM Foreground] Erreur ajout temps réel: $e');
     }
 
-    final payloadMap = {
-      'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': notification.title ?? '',
-      'body': notification.body ?? '',
-      'type': type ?? '',
-      'data': message.data,
-    };
-
+    // Afficher la bannière système via flutter_local_notifications
     await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title,
-      body: notification.body,
+      id: notifId.hashCode,
+      title: title,
+      body: body,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channel.id,
           _channel.name,
           channelDescription: _channel.description,
-          importance: Importance.high,
+          importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
           color: const Color(0xFF2D6A4F),
+          ticker: title,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -197,11 +222,14 @@ class NotificationService {
   /// Gère le tap sur une notification (app en background ou terminée)
   void _handleNotificationTap(RemoteMessage message) {
     debugPrint('[FCM] Notification tappée: ${message.data}');
+    final title = message.notification?.title ?? message.data['title'] ?? 'Notification';
+    final body = message.notification?.body ?? message.data['body'] ?? '';
+    final type = message.data['type'] ?? '';
     final payloadMap = {
       'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': message.notification?.title ?? '',
-      'body': message.notification?.body ?? '',
-      'type': message.data['type'] ?? '',
+      'title': title,
+      'body': body,
+      'type': type,
       'data': message.data,
     };
     _navigateFromPayload(jsonEncode(payloadMap));

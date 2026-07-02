@@ -17,6 +17,13 @@ class NotificationDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Marquer la notification comme lue dès l'ouverture de la page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        context.read<NotificationCubit>().markAsRead(notification.id);
+      }
+    });
+
     final signalementIdStr = notification.data?['id'];
     final signalementId = signalementIdStr != null ? int.tryParse(signalementIdStr.toString()) : null;
 

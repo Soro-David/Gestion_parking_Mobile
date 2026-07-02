@@ -5,15 +5,29 @@ import '../../domain/repositories/agent_stationnement_repository.dart';
 import '../datasources/agent_stationnement_remote_datasource.dart';
 import '../datasources/dio_agent_stationnement_remote_datasource.dart';
 
+import '../../../../core/cache/cache_manager.dart';
+
 class DioAgentStationnementRepository implements AgentStationnementRepository {
-  DioAgentStationnementRepository({AgentStationnementRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? DioAgentStationnementRemoteDataSource();
+  DioAgentStationnementRepository({
+    AgentStationnementRemoteDataSource? remoteDataSource,
+    CacheManager<List<ParkingEntry>>? cacheManager,
+  })  : _remoteDataSource = remoteDataSource ?? DioAgentStationnementRemoteDataSource(),
+        _cacheManager = cacheManager ?? CacheManager<List<ParkingEntry>>(ttl: const Duration(seconds: 15));
 
   final AgentStationnementRemoteDataSource _remoteDataSource;
+  final CacheManager<List<ParkingEntry>> _cacheManager;
 
   @override
-  Future<List<ParkingEntry>> getStationnementsEnCours() {
-    return _remoteDataSource.getStationnementsEnCours();
+  Future<List<ParkingEntry>> getStationnementsEnCours({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = _cacheManager.get();
+      if (cached != null) {
+        return cached;
+      }
+    }
+    final remoteEntries = await _remoteDataSource.getStationnementsEnCours();
+    _cacheManager.update(remoteEntries);
+    return remoteEntries;
   }
 
   @override
